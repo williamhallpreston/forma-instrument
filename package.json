@@ -1,0 +1,49 @@
+{
+  "name": "forma-instrument",
+  "version": "1.0.0",
+  "description": "Browser-native spectral morphing instrument built on the Web Audio API",
+  "author": "Forma Instruments",
+  "license": "MIT",
+  "homepage": "https://github.com/williamhallpreston/forma-instrument#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/williamhallpreston/forma-instrument.git"
+  },
+  "bugs": {
+    "url": "https://github.com/williamhallpreston/forma-instrument/issues"
+  },
+  "keywords": [
+    "web-audio",
+    "synthesizer",
+    "instrument",
+    "additive-synthesis",
+    "spectral",
+    "music",
+    "audio",
+    "browser",
+    "standalone"
+  ],
+  "scripts": {
+    "start": "npx serve . --listen 8080",
+    "dev": "npx live-server --port=8080 --open=index.html",
+    "lint": "npx eslint index.html src/**/*.js --ext .js,.html",
+    "test": "node --experimental-vm-modules node_modules/.bin/jest tests/",
+    "build": "node scripts/bundle.js",
+    "validate": "npm run lint && npm test"
+  },
+  "devDependencies": {
+    "eslint": "^8.57.0",
+    "jest": "^29.7.0",
+    "live-server": "^1.2.2",
+    "serve": "^14.2.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "browserslist": [
+    "Chrome >= 89",
+    "Firefox >= 76",
+    "Safari >= 14.1",
+    "Edge >= 89"
+  ]
+}

@@ -1,0 +1,2159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FORMA — Spectral Morphing Instrument</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap');
+
+  :root {
+    --ink: #1a1714;
+    --panel: #211f1c;
+    --surface: #2c2926;
+    --rail: #3a3632;
+    --bone: #e8e0d4;
+    --parchment: #c8bfb0;
+    --muted: #7a7168;
+    --accent: #c4874a;
+    --accent-dim: #8a5c2e;
+    --glow: rgba(196, 135, 74, 0.18);
+    --warm-white: #f0ead8;
+    --shadow-deep: rgba(0,0,0,0.6);
+    --shadow-mid: rgba(0,0,0,0.35);
+    --highlight: rgba(255,245,228,0.07);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    width: 100%; height: 100%; min-height: 100vh;
+    background: var(--ink);
+    color: var(--bone);
+    font-family: 'DM Mono', monospace;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── GRAIN OVERLAY ── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0; z-index: 999; pointer-events: none;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+    opacity: 0.032;
+    mix-blend-mode: overlay;
+  }
+
+  /* ── WRAPPER ── */
+  #app {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 24px 24px 48px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  /* ── HEADER ── */
+  header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    padding: 20px 0 18px;
+    border-bottom: 1px solid var(--rail);
+    margin-bottom: 24px;
+  }
+
+  .brand {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .brand-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 42px;
+    font-weight: 300;
+    letter-spacing: 0.22em;
+    color: var(--warm-white);
+    line-height: 1;
+  }
+
+  .brand-sub {
+    font-size: 9px;
+    letter-spacing: 0.35em;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  .header-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 6px;
+  }
+
+  .status-pill {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 9px;
+    letter-spacing: 0.25em;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  .status-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 6px var(--accent);
+    animation: pulse 2.4s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; box-shadow: 0 0 6px var(--accent); }
+    50% { opacity: 0.5; box-shadow: 0 0 2px var(--accent); }
+  }
+
+  .version-tag {
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    color: var(--rail);
+  }
+
+  /* ── MAIN LAYOUT ── */
+  .instrument-body {
+    display: grid;
+    grid-template-columns: 1fr 220px;
+    gap: 16px;
+    flex: 1;
+  }
+
+  .left-column {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .right-column {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  /* ── PANELS ── */
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--rail);
+    border-radius: 4px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .panel::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: var(--highlight);
+  }
+
+  .panel-label {
+    font-size: 8px;
+    letter-spacing: 0.4em;
+    color: var(--muted);
+    text-transform: uppercase;
+    padding: 10px 14px 0;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .panel-label-line {
+    flex: 1;
+    height: 1px;
+    background: var(--rail);
+    margin-left: 10px;
+  }
+
+  /* ── SPECTRAL CANVAS ── */
+  #spectral-panel {
+    padding-bottom: 14px;
+  }
+
+  #spectralCanvas {
+    width: 100%;
+    height: 200px;
+    cursor: crosshair;
+    display: block;
+  }
+
+  .canvas-instructions {
+    font-size: 8px;
+    letter-spacing: 0.2em;
+    color: var(--muted);
+    text-align: center;
+    padding: 6px 0 0;
+    opacity: 0.7;
+  }
+
+  /* ── MORPH XY PAD ── */
+  #morph-panel { padding: 14px; }
+
+  .xy-pad-container {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1;
+    max-height: 260px;
+  }
+
+  #morphPad {
+    width: 100%; height: 100%;
+    border: 1px solid var(--rail);
+    border-radius: 3px;
+    cursor: crosshair;
+    background: var(--surface);
+    position: relative;
+    display: block;
+  }
+
+  /* ── KNOB SECTION ── */
+  .knob-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-around;
+    padding: 14px 10px;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .knob-unit {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    min-width: 56px;
+  }
+
+  .knob-wrap {
+    position: relative;
+    width: 46px;
+    height: 46px;
+  }
+
+  .knob-svg {
+    width: 100%;
+    height: 100%;
+    cursor: ns-resize;
+    user-select: none;
+  }
+
+  .knob-label {
+    font-size: 7.5px;
+    letter-spacing: 0.28em;
+    color: var(--muted);
+    text-transform: uppercase;
+    text-align: center;
+    line-height: 1.3;
+  }
+
+  .knob-value {
+    font-size: 8.5px;
+    color: var(--accent);
+    letter-spacing: 0.1em;
+    min-width: 36px;
+    text-align: center;
+  }
+
+  /* ── PRESET STRIP ── */
+  .preset-strip {
+    display: flex;
+    gap: 6px;
+    padding: 12px 14px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    flex-wrap: wrap;
+  }
+
+  .preset-strip::-webkit-scrollbar { display: none; }
+
+  .preset-btn {
+    flex-shrink: 0;
+    font-family: 'DM Mono', monospace;
+    font-size: 8px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    background: var(--surface);
+    border: 1px solid var(--rail);
+    border-radius: 2px;
+    padding: 6px 10px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+  }
+
+  .preset-btn:hover {
+    color: var(--bone);
+    border-color: var(--accent-dim);
+  }
+
+  .preset-btn.active {
+    color: var(--accent);
+    border-color: var(--accent);
+    background: rgba(196,135,74,0.08);
+  }
+
+  /* ── ENVELOPE ── */
+  #env-canvas {
+    width: 100%;
+    height: 80px;
+    display: block;
+    cursor: pointer;
+  }
+
+  .env-row {
+    display: flex;
+    gap: 10px;
+    padding: 8px 14px 14px;
+    justify-content: space-between;
+  }
+
+  .env-unit {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    flex: 1;
+  }
+
+  .env-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 2px;
+    background: var(--rail);
+    border-radius: 1px;
+    outline: none;
+    cursor: pointer;
+  }
+
+  .env-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 0 2px rgba(196,135,74,0.2);
+    cursor: grab;
+    transition: box-shadow 0.1s;
+  }
+
+  .env-slider::-webkit-slider-thumb:active { cursor: grabbing; box-shadow: 0 0 0 4px rgba(196,135,74,0.25); }
+
+  .env-label {
+    font-size: 7.5px;
+    letter-spacing: 0.3em;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  .env-val {
+    font-size: 8px;
+    color: var(--parchment);
+    letter-spacing: 0.1em;
+  }
+
+  /* ── FX TOGGLES ── */
+  .fx-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    padding: 8px 14px 14px;
+  }
+
+  .fx-toggle {
+    position: relative;
+    background: var(--surface);
+    border: 1px solid var(--rail);
+    border-radius: 3px;
+    padding: 8px 10px;
+    cursor: pointer;
+    transition: all 0.15s;
+    user-select: none;
+  }
+
+  .fx-toggle:hover { border-color: var(--accent-dim); }
+
+  .fx-toggle.on {
+    border-color: var(--accent);
+    background: rgba(196,135,74,0.06);
+  }
+
+  .fx-toggle-name {
+    font-size: 8px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--muted);
+    display: block;
+    margin-bottom: 2px;
+  }
+
+  .fx-toggle.on .fx-toggle-name { color: var(--accent); }
+
+  .fx-toggle-led {
+    position: absolute;
+    top: 8px; right: 8px;
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--rail);
+    transition: all 0.15s;
+  }
+
+  .fx-toggle.on .fx-toggle-led {
+    background: var(--accent);
+    box-shadow: 0 0 5px var(--accent);
+  }
+
+  /* ── VOICE DISPLAY ── */
+  .voice-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px 12px;
+  }
+
+  .voice-label { font-size: 8px; letter-spacing: 0.3em; color: var(--muted); text-transform: uppercase; }
+
+  .voice-dots {
+    display: flex;
+    gap: 5px;
+    flex: 1;
+  }
+
+  .voice-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--rail);
+    border: 1px solid var(--surface);
+    transition: all 0.08s;
+  }
+
+  .voice-dot.active {
+    background: var(--accent);
+    box-shadow: 0 0 4px var(--accent);
+  }
+
+  /* ── KEYBOARD ── */
+  #keyboard-panel {
+    padding: 14px 14px 16px;
+  }
+
+  .keyboard-wrap {
+    position: relative;
+    width: 100%;
+    height: 100px;
+    user-select: none;
+  }
+
+  #keyboardCanvas {
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+    display: block;
+    border-radius: 2px;
+  }
+
+  /* ── OUTPUT METER ── */
+  .meter-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 10px 14px 14px;
+  }
+
+  .meter-bar-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .meter-ch { font-size: 7.5px; letter-spacing: 0.2em; color: var(--muted); width: 10px; }
+
+  .meter-track {
+    flex: 1;
+    height: 5px;
+    background: var(--surface);
+    border-radius: 2px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .meter-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.05s linear;
+    background: linear-gradient(90deg, #5a9e6a 0%, #a3c47a 60%, #c4874a 85%, #c45050 100%);
+  }
+
+  /* ── RIGHT COLUMN ── */
+  .morph-section {
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .xy-corner-label {
+    position: absolute;
+    font-size: 7px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    pointer-events: none;
+  }
+
+  .xy-corner-label.tl { top: 4px; left: 5px; }
+  .xy-corner-label.tr { top: 4px; right: 5px; }
+  .xy-corner-label.bl { bottom: 4px; left: 5px; }
+  .xy-corner-label.br { bottom: 4px; right: 5px; }
+
+  .xy-crosshair-h, .xy-crosshair-v {
+    position: absolute;
+    background: rgba(196,135,74,0.15);
+    pointer-events: none;
+    transition: none;
+  }
+
+  .xy-crosshair-h { height: 1px; left: 0; right: 0; }
+  .xy-crosshair-v { width: 1px; top: 0; bottom: 0; }
+
+  .morph-cursor {
+    position: absolute;
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 10px rgba(196,135,74,0.6), 0 0 2px var(--accent);
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    transition: box-shadow 0.1s;
+  }
+
+  .morph-xy-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 8px;
+    letter-spacing: 0.2em;
+    color: var(--muted);
+  }
+
+  /* ── PRODUCT STORY ── */
+  #story-panel {
+    margin-top: 8px;
+    grid-column: 1 / -1;
+  }
+
+  .story-body {
+    padding: 14px 18px 18px;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 20px;
+  }
+
+  .story-block {}
+
+  .story-heading {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: 13px;
+    color: var(--accent);
+    letter-spacing: 0.08em;
+    margin-bottom: 6px;
+  }
+
+  .story-text {
+    font-size: 10px;
+    line-height: 1.7;
+    color: var(--muted);
+    letter-spacing: 0.03em;
+  }
+
+  /* ── TOOLTIP ── */
+  .tooltip {
+    position: fixed;
+    pointer-events: none;
+    background: var(--ink);
+    border: 1px solid var(--rail);
+    color: var(--parchment);
+    font-size: 9px;
+    letter-spacing: 0.18em;
+    padding: 4px 8px;
+    border-radius: 2px;
+    z-index: 1000;
+    opacity: 0;
+    transition: opacity 0.12s;
+    text-transform: uppercase;
+  }
+
+  .tooltip.visible { opacity: 1; }
+
+  /* ── FOOTER ── */
+  footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 0 0;
+    border-top: 1px solid var(--rail);
+    margin-top: 24px;
+  }
+
+  .footer-copy {
+    font-size: 8px;
+    letter-spacing: 0.25em;
+    color: var(--rail);
+    text-transform: uppercase;
+  }
+
+  .footer-build {
+    font-size: 8px;
+    letter-spacing: 0.2em;
+    color: var(--rail);
+    font-style: italic;
+    font-family: 'Cormorant Garamond', serif;
+  }
+
+  /* ── SECTION DIVIDER ── */
+  .divider {
+    height: 1px;
+    background: var(--rail);
+    margin: 0 14px;
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 720px) {
+    .instrument-body { grid-template-columns: 1fr; }
+    .story-body { grid-template-columns: 1fr; }
+    .right-column { flex-direction: row; flex-wrap: wrap; }
+    #morph-panel { flex: 1; min-width: 200px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- HEADER -->
+  <header>
+    <div class="brand">
+      <div class="brand-name">FORMA</div>
+      <div class="brand-sub">Spectral Morphing Instrument &nbsp;·&nbsp; v1.0</div>
+    </div>
+    <div class="header-right">
+      <div class="status-pill">
+        <div class="status-dot"></div>
+        Audio Engine Active
+      </div>
+      <div class="version-tag">Web Audio / Standalone</div>
+    </div>
+  </header>
+
+  <!-- INSTRUMENT BODY -->
+  <div class="instrument-body">
+
+    <!-- LEFT COLUMN -->
+    <div class="left-column">
+
+      <!-- SPECTRAL DISPLAY -->
+      <div class="panel" id="spectral-panel">
+        <div class="panel-label">
+          Spectral Frame
+          <div class="panel-label-line"></div>
+        </div>
+        <canvas id="spectralCanvas" width="800" height="200"></canvas>
+        <div class="canvas-instructions">
+          Click canvas to add spectral nodes &nbsp;·&nbsp; Drag to reshape &nbsp;·&nbsp; Right-click to remove
+        </div>
+      </div>
+
+      <!-- OSCILLATOR BANK + KNOBS -->
+      <div class="panel">
+        <div class="panel-label">
+          Spectral Engine
+          <div class="panel-label-line"></div>
+        </div>
+        <div class="knob-row" id="knob-row"></div>
+      </div>
+
+      <!-- PRESET STRIP -->
+      <div class="panel">
+        <div class="panel-label">
+          Presets
+          <div class="panel-label-line"></div>
+        </div>
+        <div class="preset-strip" id="presetStrip"></div>
+      </div>
+
+      <!-- ENVELOPE + FX -->
+      <div class="panel">
+        <div class="panel-label">
+          Amplitude Envelope
+          <div class="panel-label-line"></div>
+        </div>
+        <canvas id="env-canvas" width="800" height="80"></canvas>
+        <div class="env-row" id="envRow"></div>
+      </div>
+
+      <!-- FX -->
+      <div class="panel">
+        <div class="panel-label">
+          Effects Chain
+          <div class="panel-label-line"></div>
+        </div>
+        <div class="fx-grid" id="fxGrid"></div>
+      </div>
+
+      <!-- KEYBOARD -->
+      <div class="panel" id="keyboard-panel">
+        <div class="panel-label">
+          Chromatic Trigger &nbsp;(Click or Z–M / A–L keys)
+          <div class="panel-label-line"></div>
+        </div>
+        <div class="keyboard-wrap">
+          <canvas id="keyboardCanvas"></canvas>
+        </div>
+      </div>
+
+      <!-- OUTPUT METER -->
+      <div class="panel">
+        <div class="panel-label">
+          Output
+          <div class="panel-label-line"></div>
+        </div>
+        <div class="meter-wrap" id="meterWrap">
+          <div class="meter-bar-wrap">
+            <div class="meter-ch">L</div>
+            <div class="meter-track"><div class="meter-fill" id="meterL" style="width:0%"></div></div>
+          </div>
+          <div class="meter-bar-wrap">
+            <div class="meter-ch">R</div>
+            <div class="meter-track"><div class="meter-fill" id="meterR" style="width:0%"></div></div>
+          </div>
+        </div>
+
+        <!-- Voice dots -->
+        <div class="divider"></div>
+        <div class="voice-row">
+          <div class="voice-label">Voices</div>
+          <div class="voice-dots" id="voiceDots"></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT COLUMN -->
+    <div class="right-column">
+
+      <!-- XY MORPH PAD -->
+      <div class="panel" id="morph-panel">
+        <div class="panel-label">
+          Morph Field
+          <div class="panel-label-line"></div>
+        </div>
+        <div class="morph-section">
+          <div class="xy-pad-container" id="xyPadContainer">
+            <canvas id="morphPad"></canvas>
+            <span class="xy-corner-label tl">Bright</span>
+            <span class="xy-corner-label tr">Harsh</span>
+            <span class="xy-corner-label bl">Dark</span>
+            <span class="xy-corner-label br">Soft</span>
+            <div class="xy-crosshair-h" id="xyCH"></div>
+            <div class="xy-crosshair-v" id="xyCV"></div>
+            <div class="morph-cursor" id="morphCursor"></div>
+          </div>
+          <div class="morph-xy-labels">
+            <span>← Timbre</span>
+            <span>Density →</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- PRODUCT STORY -->
+  <div class="panel" id="story-panel" style="margin-top:16px;">
+    <div class="panel-label">
+      Product Story
+      <div class="panel-label-line"></div>
+    </div>
+    <div class="story-body">
+      <div class="story-block">
+        <div class="story-heading">What It Is</div>
+        <div class="story-text">FORMA is a browser-native spectral morphing instrument built around a novel model: instead of oscillator banks or sample playback, you sculpt a harmonic envelope directly — placing, dragging, and removing spectral nodes that define the instrument's tonal character. A 2D morph field then interpolates continuously between spectral states in real time, creating textures no static waveform can produce.</div>
+      </div>
+      <div class="story-block">
+        <div class="story-heading">Why It Exists</div>
+        <div class="story-text">The synthesis landscape is saturated with subtractive clones and wavetable me-toos. What's missing is an approachable, professional-grade spectral instrument that doesn't require a PhD in DSP. FORMA was built for composers and sound designers who hear a texture in their mind and need a direct, tactile path to realising it — not a menu system, not a patch cable, but a surface you draw on.</div>
+      </div>
+      <div class="story-block">
+        <div class="story-heading">Who It's For</div>
+        <div class="story-text">Film composers building tension layers. Electronic producers hunting for pads that breathe differently. Sound designers who've exhausted every preset library and want instruments that respond to intention, not accident. FORMA rewards the curious: the deeper you explore the morph field, the more it reveals. It is, above all, a thinking instrument.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-copy">© 2026 Forma Instruments — All rights reserved</div>
+    <div class="footer-build">Spectral Morphing &nbsp;·&nbsp; Web Audio API</div>
+  </footer>
+
+</div>
+
+<!-- TOOLTIP -->
+<div class="tooltip" id="tooltip"></div>
+
+<script>
+/**
+ * FORMA — Spectral Morphing Instrument
+ * Version: 1.0.0
+ *
+ * Architecture overview:
+ *   Each note triggers a fresh set of OscillatorNodes (one per harmonic),
+ *   routed through a per-voice GainNode that applies the ADSR envelope.
+ *   All voices feed into a shared masterGain → DynamicsCompressor → output,
+ *   with parallel sends to convolution reverb and a feedback delay line.
+ *
+ * The spectral character is determined by:
+ *   1. Spectral nodes drawn on the canvas (Gaussian-weighted amplitude envelope)
+ *   2. The XY morph field (real-time harmonic parity and brightness modulation)
+ *   3. Per-voice knob values (harmonics count, detune, spread, drive, shimmer)
+ *
+ * See docs/ARCHITECTURE.md for the full signal graph and design rationale.
+ */
+
+// Cross-browser AudioContext alias (Safari uses webkit prefix)
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+
+// Audio graph node references (initialised in initAudio())
+let ctx = null;
+let masterGain, reverbGain, delayNode, delayFeedback, reverbNode, compressor, analyserL, analyserR;
+
+// FX bypass state — toggled by the fx-toggle buttons
+let fxState = { reverb: false, delay: false, chorus: false, distort: false };
+
+// ── Polyphony ──
+const MAX_VOICES = 8;
+/**
+ * Active voice registry.
+ * Key: noteKey string (e.g. 'kb_z', 'mouse_60')
+ * Value: { oscs: Array<{osc, hGain}>, envGain: GainNode, startTime: number }
+ */
+const activeVoices = new Map();
+
+// Spectral nodes: [{x: 0..1, y: 0..1, freq: hz, amp: 0..1}]
+let spectralNodes = [];
+
+// Morph state
+let morphX = 0.5, morphY = 0.5;
+
+// Envelope state (ADSR)
+const env = { attack: 0.04, decay: 0.18, sustain: 0.72, release: 0.5 };
+
+// Knob definitions
+const knobs = [
+  { id: 'harmonics', label: 'Harmonics', min: 2, max: 24, value: 8, step: 1, unit: '' },
+  { id: 'detune', label: 'Detune', min: 0, max: 50, value: 8, step: 0.5, unit: 'ct' },
+  { id: 'spread', label: 'Spread', min: 0, max: 100, value: 30, step: 1, unit: '%' },
+  { id: 'drive', label: 'Drive', min: 0, max: 100, value: 12, step: 1, unit: '%' },
+  { id: 'brightness', label: 'Bright', min: 0, max: 100, value: 55, step: 1, unit: '%' },
+  { id: 'shimmer', label: 'Shimmer', min: 0, max: 100, value: 0, step: 1, unit: '%' },
+];
+
+const knobValues = {};
+knobs.forEach(k => knobValues[k.id] = k.value);
+
+// Presets
+const presets = [
+  {
+    name: 'Void Choir', harmonics: 12, detune: 14, spread: 60, drive: 8, brightness: 40, shimmer: 20,
+    morphX: 0.3, morphY: 0.7,
+    env: { attack: 0.3, decay: 0.4, sustain: 0.6, release: 1.2 },
+    nodes: [[0.15,0.2],[0.28,0.55],[0.45,0.3],[0.62,0.65],[0.8,0.4]]
+  },
+  {
+    name: 'Iron Bell', harmonics: 18, detune: 3, spread: 15, drive: 35, brightness: 75, shimmer: 5,
+    morphX: 0.7, morphY: 0.2,
+    env: { attack: 0.01, decay: 0.8, sustain: 0.1, release: 2.5 },
+    nodes: [[0.1,0.7],[0.22,0.3],[0.38,0.8],[0.55,0.15],[0.72,0.6],[0.88,0.35]]
+  },
+  {
+    name: 'Silk Pad', harmonics: 6, detune: 22, spread: 80, drive: 0, brightness: 30, shimmer: 45,
+    morphX: 0.2, morphY: 0.8,
+    env: { attack: 0.8, decay: 0.3, sustain: 0.9, release: 2.0 },
+    nodes: [[0.2,0.4],[0.4,0.6],[0.6,0.5],[0.8,0.55]]
+  },
+  {
+    name: 'Pulse Wire', harmonics: 22, detune: 2, spread: 5, drive: 70, brightness: 90, shimmer: 0,
+    morphX: 0.85, morphY: 0.15,
+    env: { attack: 0.01, decay: 0.05, sustain: 0.85, release: 0.12 },
+    nodes: [[0.1,0.85],[0.25,0.4],[0.42,0.9],[0.58,0.35],[0.75,0.8],[0.9,0.2]]
+  },
+  {
+    name: 'Glass Arch', harmonics: 9, detune: 7, spread: 40, drive: 18, brightness: 60, shimmer: 60,
+    morphX: 0.5, morphY: 0.5,
+    env: { attack: 0.12, decay: 0.25, sustain: 0.75, release: 0.9 },
+    nodes: [[0.15,0.5],[0.3,0.2],[0.5,0.8],[0.7,0.3],[0.85,0.6]]
+  },
+  {
+    name: 'Mariana', harmonics: 5, detune: 30, spread: 90, drive: 5, brightness: 15, shimmer: 80,
+    morphX: 0.1, morphY: 0.9,
+    env: { attack: 1.2, decay: 0.6, sustain: 0.5, release: 3.5 },
+    nodes: [[0.25,0.6],[0.5,0.3],[0.75,0.7]]
+  },
+];
+
+let activePreset = 0;
+
+// ── AUDIO ENGINE INIT ──
+
+/**
+ * Initialise the Web Audio API context and assemble the signal chain.
+ * Called lazily on first user interaction to comply with browser autoplay policy.
+ * Safe to call multiple times — exits immediately if already initialised.
+ */
+function initAudio() {
+  if (ctx) return;
+  ctx = new AudioCtx();
+  masterGain = ctx.createGain();
+  masterGain.gain.value = 0.55;
+
+  compressor = ctx.createDynamicsCompressor();
+  compressor.threshold.value = -18;
+  compressor.knee.value = 12;
+  compressor.ratio.value = 4;
+  compressor.attack.value = 0.003;
+  compressor.release.value = 0.2;
+
+  analyserL = ctx.createAnalyser();
+  analyserL.fftSize = 256;
+  analyserR = ctx.createAnalyser();
+  analyserR.fftSize = 256;
+
+  // Reverb (convolution)
+  reverbNode = ctx.createConvolver();
+  reverbGain = ctx.createGain();
+  reverbGain.gain.value = 0;
+  buildReverb();
+
+  // Delay
+  delayNode = ctx.createDelay(2);
+  delayNode.delayTime.value = 0.35;
+  delayFeedback = ctx.createGain();
+  delayFeedback.gain.value = 0;
+  delayNode.connect(delayFeedback);
+  delayFeedback.connect(delayNode);
+
+  masterGain.connect(compressor);
+  compressor.connect(analyserL);
+  compressor.connect(analyserR);
+  analyserL.connect(ctx.destination);
+
+  masterGain.connect(reverbGain);
+  reverbGain.connect(reverbNode);
+  reverbNode.connect(ctx.destination);
+
+  masterGain.connect(delayNode);
+  delayNode.connect(ctx.destination);
+
+  tickMeter();
+}
+
+/**
+ * Generate a synthetic impulse response for the convolution reverb.
+ * Uses shaped pink-ish noise with an exponential decay curve (~3.2s tail).
+ * Called once during initAudio(); the buffer is reused for the session.
+ */
+function buildReverb() {
+  const len = ctx.sampleRate * 3.2;
+  const buf = ctx.createBuffer(2, len, ctx.sampleRate);
+  for (let c = 0; c < 2; c++) {
+    const d = buf.getChannelData(c);
+    for (let i = 0; i < len; i++) {
+      d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.2);
+    }
+  }
+  reverbNode.buffer = buf;
+}
+
+// ── SPECTRAL SYNTHESIS ──
+
+/**
+ * Build a per-harmonic amplitude array from the current spectral nodes.
+ *
+ * Each node acts as a Gaussian "bump" in harmonic space. The sharpness factor
+ * of 18 gives each node an influence radius of roughly ±2 adjacent harmonics,
+ * producing smooth curves without creating unnatural flat regions.
+ *
+ * Node Y is *inverted* because the canvas draws silence at top (y=0) and
+ * full amplitude at bottom (y=1), matching the visual intuition of a spectrum.
+ *
+ * @param {number} numHarmonics - number of partials to compute (2–24)
+ * @returns {Float32Array} amplitudes in 0..1 range, length = numHarmonics
+ */
+function getSpectralAmps(numHarmonics) {
+  const amps = new Float32Array(numHarmonics).fill(0);
+  if (spectralNodes.length === 0) {
+    // Default sine-ish falloff
+    for (let i = 0; i < numHarmonics; i++) amps[i] = 1 / (i + 1) * 0.8;
+    return amps;
+  }
+  for (let i = 0; i < numHarmonics; i++) {
+    const normI = i / (numHarmonics - 1);
+    // Interpolate spectral nodes
+    let amp = 0;
+    spectralNodes.forEach(n => {
+      const dist = Math.abs(normI - n.x);
+      const w = Math.exp(-dist * dist * 18);
+      amp += w * (1 - n.y);
+    });
+    amps[i] = Math.min(amp, 1.0);
+  }
+  return amps;
+}
+
+// ── VOICE MANAGEMENT ──
+
+/**
+ * Trigger a new note voice at the given frequency.
+ * Creates a fresh set of OscillatorNodes (one per harmonic) plus an optional
+ * WaveShaper for drive and a shimmer octave partial. All are routed through
+ * a shared per-voice GainNode that applies the ADSR envelope.
+ *
+ * @param {number} freq      - fundamental frequency in Hz
+ * @param {string} noteKey   - unique key for this voice (e.g. 'kb_z', 'mouse_60')
+ */
+function playNote(freq, noteKey) {
+  initAudio();
+  if (ctx.state === 'suspended') ctx.resume();
+
+  // Release existing if re-triggered
+  if (activeVoices.has(noteKey)) releaseNote(noteKey, true);
+
+  const numH = Math.round(knobValues.harmonics);
+  const detuneAmt = knobValues.detune;
+  const spreadAmt = knobValues.spread / 100;
+  const driveAmt = knobValues.drive / 100;
+  const shimmerAmt = knobValues.shimmer / 100;
+  const amps = getSpectralAmps(numH);
+
+  // Apply morph: X = timbre (even/odd), Y = density (fade higher harmonics)
+  const morphBrightness = 1 - morphY;  // Y up = darker
+  const morphTimbre = morphX;
+
+  const envGain = ctx.createGain();
+  envGain.gain.setValueAtTime(0, ctx.currentTime);
+  envGain.gain.linearRampToValueAtTime(0.001, ctx.currentTime + 0.001);
+  envGain.gain.linearRampToValueAtTime(1, ctx.currentTime + env.attack);
+  envGain.gain.linearRampToValueAtTime(env.sustain, ctx.currentTime + env.attack + env.decay);
+
+  // Waveshaper for drive
+  let waveShaper = null;
+  if (driveAmt > 0.01) {
+    waveShaper = ctx.createWaveShaper();
+    const k = driveAmt * 200;
+    const n = 256;
+    const curve = new Float32Array(n);
+    for (let i = 0; i < n; i++) {
+      const x = (i * 2) / n - 1;
+      curve[i] = ((Math.PI + k) * x) / (Math.PI + k * Math.abs(x));
+    }
+    waveShaper.curve = curve;
+  }
+
+  const oscs = [];
+  let totalAmp = 0;
+  for (let i = 0; i < numH; i++) totalAmp += amps[i];
+  const normFactor = totalAmp > 0 ? 0.35 / totalAmp : 0.35;
+
+  for (let i = 0; i < numH; i++) {
+    const harmFreq = freq * (i + 1);
+    if (harmFreq > 20000) continue;
+
+    let a = amps[i];
+    // Morph brightness: reduce high harmonics when Y is high (dark)
+    a *= Math.pow(morphBrightness, i * 0.5);
+    // Morph timbre: boost even harmonics when X > 0.5
+    if (i % 2 === 0 && morphTimbre > 0.5) a *= 1 + (morphTimbre - 0.5) * 1.5;
+    if (i % 2 === 1 && morphTimbre < 0.5) a *= 1 + (0.5 - morphTimbre) * 1.5;
+    if (a < 0.001) continue;
+
+    const osc = ctx.createOscillator();
+    // All partials use sine waves — the additive model builds complex timbres
+    // from the amplitude envelope, not from waveform choice.
+    osc.type = 'sine';
+    osc.frequency.value = harmFreq;
+
+    // Detune spread
+    const spreadOffset = (Math.random() - 0.5) * detuneAmt * spreadAmt;
+    osc.detune.value = spreadOffset;
+
+    const hGain = ctx.createGain();
+    hGain.gain.value = a * normFactor;
+
+    osc.connect(hGain);
+    if (waveShaper) {
+      hGain.connect(waveShaper);
+    } else {
+      hGain.connect(envGain);
+    }
+    oscs.push({ osc, hGain });
+    osc.start();
+  }
+
+  if (waveShaper) {
+    waveShaper.connect(envGain);
+  }
+
+  // Shimmer: octave up partial
+  if (shimmerAmt > 0.01) {
+    const shimOsc = ctx.createOscillator();
+    shimOsc.type = 'sine';
+    shimOsc.frequency.value = freq * 2;
+    shimOsc.detune.value = 5;
+    const shimGain = ctx.createGain();
+    shimGain.gain.value = shimmerAmt * 0.18;
+    shimOsc.connect(shimGain);
+    shimGain.connect(envGain);
+    shimOsc.start();
+    oscs.push({ osc: shimOsc, hGain: shimGain });
+  }
+
+  envGain.connect(masterGain);
+
+  const voice = { oscs, envGain, startTime: ctx.currentTime };
+  activeVoices.set(noteKey, voice);
+  updateVoiceDots();
+
+  // Max voices: kill oldest
+  if (activeVoices.size > MAX_VOICES) {
+    const oldest = [...activeVoices.entries()].reduce((a, b) => a[1].startTime < b[1].startTime ? a : b);
+    releaseNote(oldest[0], true);
+  }
+}
+
+/**
+ * Begin the release phase for a voice, then clean up its nodes.
+ *
+ * @param {string}  noteKey   - key used when the voice was registered
+ * @param {boolean} immediate - if true, use a short 50ms fade instead of env.release
+ */
+function releaseNote(noteKey, immediate = false) {
+  const voice = activeVoices.get(noteKey);
+  if (!voice) return;
+  const { oscs, envGain } = voice;
+  const now = ctx.currentTime;
+  const rel = immediate ? 0.05 : env.release;
+  envGain.gain.cancelScheduledValues(now);
+  envGain.gain.setValueAtTime(envGain.gain.value, now);
+  envGain.gain.linearRampToValueAtTime(0.0001, now + rel);
+  setTimeout(() => {
+    oscs.forEach(({ osc }) => { try { osc.stop(); } catch(e){} });
+    envGain.disconnect();
+  }, (rel + 0.1) * 1000);
+  activeVoices.delete(noteKey);
+  updateVoiceDots();
+}
+
+// ── VOICE DOTS ──
+function updateVoiceDots() {
+  const count = activeVoices.size;
+  document.querySelectorAll('.voice-dot').forEach((d, i) => {
+    d.classList.toggle('active', i < count);
+  });
+}
+
+// ── OUTPUT METER ──
+
+/**
+ * Continuous rAF loop that reads RMS amplitude from both analysers
+ * and updates the L/R meter bars. Called once after audio init.
+ *
+ * Note: true stereo separation requires the voice panning architecture
+ * planned for v1.1. For now both channels reflect the mono master bus,
+ * with analyserR connected as a separate tap to allow future divergence.
+ */
+function tickMeter() {
+  const bufL = new Uint8Array(analyserL.frequencyBinCount);
+  const bufR = new Uint8Array(analyserR.frequencyBinCount);
+
+  analyserL.getByteTimeDomainData(bufL);
+  analyserR.getByteTimeDomainData(bufR);
+
+  let rmsL = 0, rmsR = 0;
+  for (let i = 0; i < bufL.length; i++) {
+    const sL = (bufL[i] / 128) - 1;
+    const sR = (bufR[i] / 128) - 1;
+    rmsL += sL * sL;
+    rmsR += sR * sR;
+  }
+  rmsL = Math.sqrt(rmsL / bufL.length);
+  rmsR = Math.sqrt(rmsR / bufR.length);
+
+  document.getElementById('meterL').style.width = Math.min(rmsL * 500, 100) + '%';
+  document.getElementById('meterR').style.width = Math.min(rmsR * 500, 100) + '%';
+
+  requestAnimationFrame(tickMeter);
+}
+
+// ══════════════════════════════════════════════
+//  UI COMPONENTS
+// ══════════════════════════════════════════════
+
+// ── KNOB UI ──
+
+/**
+ * Build all knob controls and append them to #knob-row.
+ * Each knob is an SVG with a radial arc track, a rotating indicator line,
+ * and a gradient body. Interaction is vertical drag (mouse + touch).
+ * Double-click resets to the knob's default value.
+ */
+function buildKnobs() {
+  const row = document.getElementById('knob-row');
+  knobs.forEach(k => {
+    const unit = document.createElement('div');
+    unit.className = 'knob-unit';
+    unit.innerHTML = `
+      <div class="knob-wrap" data-id="${k.id}">
+        <svg class="knob-svg" viewBox="0 0 46 46" data-id="${k.id}">
+          <defs>
+            <radialGradient id="kg_${k.id}" cx="40%" cy="30%" r="65%">
+              <stop offset="0%" stop-color="#4a4540"/>
+              <stop offset="100%" stop-color="#1e1c19"/>
+            </radialGradient>
+          </defs>
+          <!-- Track -->
+          <circle cx="23" cy="23" r="18" fill="none" stroke="#3a3632" stroke-width="2.5"
+            stroke-dasharray="${2*Math.PI*18*0.75} ${2*Math.PI*18*0.25}"
+            stroke-dashoffset="${2*Math.PI*18*0.125}"
+            stroke-linecap="round" transform="rotate(135 23 23)"/>
+          <!-- Value arc -->
+          <circle cx="23" cy="23" r="18" fill="none" stroke="#c4874a" stroke-width="2.5"
+            stroke-dasharray="0 ${2*Math.PI*18}"
+            stroke-linecap="round" transform="rotate(135 23 23)"
+            class="knob-arc" data-max="${2*Math.PI*18*0.75}"/>
+          <!-- Body -->
+          <circle cx="23" cy="23" r="14" fill="url(#kg_${k.id})"
+            stroke="#2a2724" stroke-width="1"/>
+          <!-- Highlight -->
+          <ellipse cx="19" cy="18" rx="5" ry="3" fill="rgba(255,245,228,0.06)" transform="rotate(-20 19 18)"/>
+          <!-- Indicator line -->
+          <line x1="23" y1="23" x2="23" y2="11"
+            stroke="#c4874a" stroke-width="1.5" stroke-linecap="round"
+            class="knob-indicator" transform="rotate(0 23 23)"/>
+          <circle cx="23" cy="23" r="2" fill="#c4874a" opacity="0.6"/>
+        </svg>
+      </div>
+      <div class="knob-label">${k.label}</div>
+      <div class="knob-value" data-id="${k.id}">${k.value}${k.unit}</div>
+    `;
+    row.appendChild(unit);
+
+    // Knob interaction
+    const svg = unit.querySelector('.knob-svg');
+    let dragging = false, startY = 0, startVal = 0;
+
+    svg.addEventListener('mousedown', e => {
+      dragging = true; startY = e.clientY; startVal = knobValues[k.id];
+      e.preventDefault();
+    });
+
+    window.addEventListener('mousemove', e => {
+      if (!dragging) return;
+      const delta = (startY - e.clientY) / 120;
+      const range = k.max - k.min;
+      let newVal = Math.max(k.min, Math.min(k.max, startVal + delta * range));
+      // Snap to step
+      newVal = Math.round(newVal / k.step) * k.step;
+      knobValues[k.id] = newVal;
+      updateKnob(k.id, k, newVal);
+    });
+
+    window.addEventListener('mouseup', () => { dragging = false; });
+
+    // Touch support
+    svg.addEventListener('touchstart', e => {
+      dragging = true; startY = e.touches[0].clientY; startVal = knobValues[k.id];
+      e.preventDefault();
+    }, { passive: false });
+    window.addEventListener('touchmove', e => {
+      if (!dragging) return;
+      const delta = (startY - e.touches[0].clientY) / 120;
+      const range = k.max - k.min;
+      let newVal = Math.max(k.min, Math.min(k.max, startVal + delta * range));
+      newVal = Math.round(newVal / k.step) * k.step;
+      knobValues[k.id] = newVal;
+      updateKnob(k.id, k, newVal);
+    }, { passive: false });
+    window.addEventListener('touchend', () => { dragging = false; });
+
+    // Double-click reset
+    svg.addEventListener('dblclick', () => {
+      knobValues[k.id] = k.value;
+      updateKnob(k.id, k, k.value);
+    });
+
+    // Tooltip
+    svg.addEventListener('mouseenter', e => showTooltip(k.label + ': ' + knobValues[k.id] + k.unit, e));
+    svg.addEventListener('mouseleave', hideTooltip);
+    svg.addEventListener('mousemove', e => updateTooltipPos(e));
+
+    updateKnob(k.id, k, k.value);
+  });
+}
+
+/**
+ * Sync the knob SVG arc, indicator rotation, and value readout to a new value.
+ *
+ * The arc sweeps from -135° to +135° (270° total travel), matching hardware
+ * convention. The stroke-dasharray trick draws a partial circle:
+ *   filled portion = t × maxDash
+ *   unfilled = maxDash (SVG wraps the remainder)
+ *
+ * @param {string} id    - knob id (matches knobs[].id)
+ * @param {Object} k     - knob definition object from the knobs array
+ * @param {number} val   - current value to display
+ */
+function updateKnob(id, k, val) {
+  const row = document.getElementById('knob-row');
+  const svg = row.querySelector(`.knob-svg[data-id="${id}"]`);
+  const arc = svg.querySelector('.knob-arc');
+  const indicator = svg.querySelector('.knob-indicator');
+  const valueEl = document.querySelector(`.knob-value[data-id="${id}"]`);
+
+  const t = (val - k.min) / (k.max - k.min);
+  const maxDash = parseFloat(arc.getAttribute('data-max'));
+  arc.setAttribute('stroke-dasharray', `${t * maxDash} ${maxDash}`);
+
+  // Indicator rotation: -135 to +135 degrees
+  const angle = -135 + t * 270;
+  indicator.setAttribute('transform', `rotate(${angle} 23 23)`);
+
+  if (valueEl) {
+    const display = Number.isInteger(k.step) ? Math.round(val) : val.toFixed(1);
+    valueEl.textContent = display + k.unit;
+  }
+}
+
+// ── ENVELOPE UI ──
+
+/**
+ * Build the ADSR slider row beneath the envelope canvas.
+ * Each slider is bound to the shared `env` object and triggers a canvas redraw.
+ */
+function buildEnvelope() {
+  const row = document.getElementById('envRow');
+  const params = [
+    { id: 'attack', label: 'Attack', min: 0.001, max: 3, step: 0.001 },
+    { id: 'decay', label: 'Decay', min: 0.01, max: 3, step: 0.01 },
+    { id: 'sustain', label: 'Sustain', min: 0, max: 1, step: 0.01 },
+    { id: 'release', label: 'Release', min: 0.01, max: 6, step: 0.01 },
+  ];
+  params.forEach(p => {
+    const unit = document.createElement('div');
+    unit.className = 'env-unit';
+    unit.innerHTML = `
+      <div class="env-label">${p.label}</div>
+      <input type="range" class="env-slider" min="${p.min}" max="${p.max}" step="${p.step}" value="${env[p.id]}">
+      <div class="env-val" data-id="env_${p.id}">${env[p.id].toFixed(2)}</div>
+    `;
+    row.appendChild(unit);
+    const slider = unit.querySelector('input');
+    slider.addEventListener('input', () => {
+      env[p.id] = parseFloat(slider.value);
+      unit.querySelector('.env-val').textContent = env[p.id].toFixed(2);
+      drawEnvCanvas();
+    });
+  });
+  drawEnvCanvas();
+}
+
+/**
+ * Redraw the ADSR envelope visualisation on #env-canvas.
+ * The curve maps time (x) to amplitude (y) across four phases:
+ *   Attack → peak (1.0) → Decay → Sustain level → [hold] → Release → 0
+ * A synthetic "hold" segment of 0.4s is added between sustain and release
+ * to make the shape readable at all ADSR combinations.
+ */
+function drawEnvCanvas() {
+  const canvas = document.getElementById('env-canvas');
+  const W = canvas.offsetWidth || 700;
+  canvas.width = W * window.devicePixelRatio;
+  canvas.height = 80 * window.devicePixelRatio;
+  const ctx2 = canvas.getContext('2d');
+  ctx2.scale(window.devicePixelRatio, window.devicePixelRatio);
+  const w = W, h = 80;
+
+  ctx2.clearRect(0, 0, w, h);
+  ctx2.fillStyle = '#211f1c';
+  ctx2.fillRect(0, 0, w, h);
+
+  // Grid lines
+  ctx2.strokeStyle = '#2c2926';
+  ctx2.lineWidth = 1;
+  for (let i = 0; i <= 4; i++) {
+    ctx2.beginPath(); ctx2.moveTo(w * i / 4, 0); ctx2.lineTo(w * i / 4, h); ctx2.stroke();
+  }
+
+  // ADSR curve
+  const pad = 8;
+  const totalTime = env.attack + env.decay + 0.4 + env.release;
+  const toX = t => pad + (t / totalTime) * (w - pad * 2);
+  const toY = v => pad + (1 - v) * (h - pad * 2);
+
+  const t0 = 0;
+  const t1 = env.attack;
+  const t2 = t1 + env.decay;
+  const t3 = t2 + 0.4;
+  const t4 = t3 + env.release;
+
+  ctx2.beginPath();
+  ctx2.moveTo(toX(t0), toY(0));
+  ctx2.lineTo(toX(t1), toY(1));
+  ctx2.lineTo(toX(t2), toY(env.sustain));
+  ctx2.lineTo(toX(t3), toY(env.sustain));
+  ctx2.lineTo(toX(t4), toY(0));
+
+  // Glow
+  const grad = ctx2.createLinearGradient(0, 0, 0, h);
+  grad.addColorStop(0, 'rgba(196,135,74,0.3)');
+  grad.addColorStop(1, 'rgba(196,135,74,0.02)');
+  ctx2.fillStyle = grad;
+  ctx2.fill();
+
+  ctx2.strokeStyle = '#c4874a';
+  ctx2.lineWidth = 1.5;
+  ctx2.stroke();
+
+  // Phase labels
+  ctx2.fillStyle = '#4a4540';
+  ctx2.font = '8px DM Mono';
+  ['A', 'D', 'S', 'R'].forEach((l, i) => {
+    const tx = [toX(t0 + (t1-t0)*0.5), toX(t1+(t2-t1)*0.5), toX(t2+(t3-t2)*0.5), toX(t3+(t4-t3)*0.5)][i];
+    ctx2.fillText(l, tx - 3, h - 2);
+  });
+}
+
+// ── EFFECTS CHAIN UI ──
+
+/**
+ * Build the 2×2 FX toggle grid.
+ * Reverb and Delay route audio through the shared send nodes.
+ * Chorus and Saturate are cosmetic toggles in v1 — their sonic effect
+ * is controlled by the Shimmer and Drive knobs respectively.
+ * (Full LFO chorus routing is on the v1.1 roadmap.)
+ */
+function buildFX() {
+  const grid = document.getElementById('fxGrid');
+  const fx = [
+    { id: 'reverb', label: 'Reverb', sub: 'Hall' },
+    { id: 'delay', label: 'Delay', sub: '3/8' },
+    { id: 'chorus', label: 'Chorus', sub: 'Wide' },
+    { id: 'distort', label: 'Saturate', sub: 'Tube' },
+  ];
+  fx.forEach(f => {
+    const el = document.createElement('div');
+    el.className = 'fx-toggle';
+    el.setAttribute('title', f.label);
+    el.innerHTML = `
+      <span class="fx-toggle-name">${f.label}</span>
+      <small style="font-size:7px;color:var(--muted);letter-spacing:0.2em;">${f.sub}</small>
+      <div class="fx-toggle-led"></div>
+    `;
+    el.addEventListener('click', () => {
+      fxState[f.id] = !fxState[f.id];
+      el.classList.toggle('on', fxState[f.id]);
+      applyFX();
+    });
+    grid.appendChild(el);
+  });
+}
+
+/**
+ * Apply or bypass effects based on the current fxState object.
+ * Uses setTargetAtTime for click-free transitions (5ms time constant).
+ * Chorus and distortion are handled via the shimmer/drive knobs respectively —
+ * their fx-toggle buttons serve as user-visible on/off indicators only.
+ */
+function applyFX() {
+  if (!ctx) return;
+  reverbGain.gain.setTargetAtTime(fxState.reverb ? 0.35 : 0, ctx.currentTime, 0.05);
+  delayFeedback.gain.setTargetAtTime(fxState.delay ? 0.32 : 0, ctx.currentTime, 0.05);
+  // Chorus / distort handled via knob modulation (shimmer, drive)
+}
+
+// ── SPECTRAL CANVAS UI ──
+
+/** Index of the node currently being dragged, or -1 if none. */
+let dragNodeIdx = -1;
+
+/**
+ * Initialise the spectral node canvas.
+ * - Left-click on empty area: add a new node
+ * - Left-drag on existing node: reposition it
+ * - Right-click: remove nearest node within 4% radius
+ *
+ * Nodes are stored as normalised {x, y} coordinates (0..1 each).
+ * The canvas runs a continuous rAF animation loop (spectralLoop) that
+ * applies a small sway animation to bars when voices are active.
+ */
+function buildSpectral() {
+  const canvas = document.getElementById('spectralCanvas');
+  // Add default nodes for preset
+  spectralNodes = presets[0].nodes.map(([x, y]) => ({ x, y }));
+
+  canvas.addEventListener('mousedown', e => {
+    const r = canvas.getBoundingClientRect();
+    const mx = (e.clientX - r.left) / r.width;
+    const my = (e.clientY - r.top) / r.height;
+
+    if (e.button === 2) {
+      // Right-click: remove nearest
+      let minD = 0.04, minI = -1;
+      spectralNodes.forEach((n, i) => {
+        const d = Math.hypot(n.x - mx, n.y - my);
+        if (d < minD) { minD = d; minI = i; }
+      });
+      if (minI >= 0) spectralNodes.splice(minI, 1);
+      drawSpectral(); return;
+    }
+
+    // Check drag existing
+    let found = -1;
+    spectralNodes.forEach((n, i) => {
+      if (Math.hypot(n.x - mx, n.y - my) < 0.04) found = i;
+    });
+    if (found >= 0) { dragNodeIdx = found; }
+    else {
+      // Add new
+      spectralNodes.push({ x: mx, y: my });
+      dragNodeIdx = spectralNodes.length - 1;
+    }
+    drawSpectral();
+  });
+
+  canvas.addEventListener('mousemove', e => {
+    if (dragNodeIdx < 0) return;
+    const r = canvas.getBoundingClientRect();
+    spectralNodes[dragNodeIdx].x = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width));
+    spectralNodes[dragNodeIdx].y = Math.max(0, Math.min(1, (e.clientY - r.top) / r.height));
+    drawSpectral();
+  });
+
+  canvas.addEventListener('mouseup', () => { dragNodeIdx = -1; });
+  canvas.addEventListener('mouseleave', () => { dragNodeIdx = -1; });
+  canvas.addEventListener('contextmenu', e => e.preventDefault());
+
+  drawSpectral();
+  requestAnimationFrame(spectralLoop);
+}
+
+/** Animation phase accumulator for the spectral bar sway effect. */
+let spectralPhase = 0;
+
+/** rAF loop — advances the spectral sway animation at ~60fps. */
+function spectralLoop() {
+  spectralPhase += 0.012;
+  drawSpectral();
+  requestAnimationFrame(spectralLoop);
+}
+
+/**
+ * Render the spectral display canvas.
+ * Draws:
+ *   1. Background + grid lines
+ *   2. Amplitude bars (one per harmonic, animated when voices active)
+ *   3. Envelope curve overlay connecting the spectral nodes
+ *   4. Interactive node handles (accent colour, larger when dragged)
+ *
+ * Canvas is scaled by devicePixelRatio on every frame to handle
+ * dynamic DPI changes (e.g. moving window between displays).
+ */
+function drawSpectral() {
+  const canvas = document.getElementById('spectralCanvas');
+  const W = canvas.offsetWidth || 760;
+  const H = 200;
+  if (canvas.width !== W * window.devicePixelRatio) {
+    canvas.width = W * window.devicePixelRatio;
+    canvas.height = H * window.devicePixelRatio;
+  }
+  const c = canvas.getContext('2d');
+  c.scale(window.devicePixelRatio / (canvas.width / W), window.devicePixelRatio / (canvas.height / H));
+  const w = W, h = H;
+
+  c.clearRect(0, 0, w, h);
+  c.fillStyle = '#1a1714';
+  c.fillRect(0, 0, w, h);
+
+  // Grid
+  c.strokeStyle = 'rgba(58,54,50,0.5)';
+  c.lineWidth = 0.5;
+  for (let i = 0; i <= 8; i++) {
+    c.beginPath(); c.moveTo(w * i / 8, 0); c.lineTo(w * i / 8, h); c.stroke();
+  }
+  for (let i = 0; i <= 4; i++) {
+    c.beginPath(); c.moveTo(0, h * i / 4); c.lineTo(w, h * i / 4); c.stroke();
+  }
+
+  // Spectral curve from nodes
+  const numH = Math.round(knobValues.harmonics || 8);
+  const amps = getSpectralAmps(numH);
+
+  // Draw as bars
+  const barW = w / numH;
+  for (let i = 0; i < numH; i++) {
+    const amp = amps[i];
+    // Animate: slight sway
+    const sway = Math.sin(spectralPhase + i * 0.4) * 0.03 * (activeVoices.size > 0 ? 1 : 0.3);
+    const displayAmp = Math.max(0, Math.min(1, amp + sway));
+    const bh = displayAmp * (h - 20);
+    const bx = i * barW + 1;
+    const by = h - bh - 4;
+
+    const grad = c.createLinearGradient(0, by, 0, h);
+    grad.addColorStop(0, `rgba(196,135,74,${0.2 + displayAmp * 0.6})`);
+    grad.addColorStop(1, 'rgba(196,135,74,0.04)');
+    c.fillStyle = grad;
+    c.fillRect(bx, by, barW - 2, bh);
+
+    // Top highlight
+    c.fillStyle = `rgba(240,234,216,${displayAmp * 0.35})`;
+    c.fillRect(bx, by, barW - 2, 1.5);
+  }
+
+  // Spectral envelope curve overlay
+  if (spectralNodes.length > 0) {
+    const sorted = [...spectralNodes].sort((a, b) => a.x - b.x);
+    c.beginPath();
+    c.moveTo(0, h);
+    sorted.forEach(n => {
+      c.lineTo(n.x * w, (1 - (1 - n.y)) * h);
+    });
+    c.lineTo(w, h);
+    c.strokeStyle = 'rgba(196,135,74,0.25)';
+    c.lineWidth = 1;
+    c.stroke();
+  }
+
+  // Nodes
+  spectralNodes.forEach((n, i) => {
+    const px = n.x * w, py = n.y * h;
+    c.beginPath();
+    c.arc(px, py, 5, 0, Math.PI * 2);
+    c.fillStyle = i === dragNodeIdx ? '#f0ead8' : '#c4874a';
+    c.fill();
+    c.strokeStyle = 'rgba(196,135,74,0.4)';
+    c.lineWidth = 6;
+    c.stroke();
+    c.beginPath();
+    c.arc(px, py, 5, 0, Math.PI * 2);
+    c.strokeStyle = i === dragNodeIdx ? 'rgba(240,234,216,0.6)' : 'rgba(196,135,74,0.8)';
+    c.lineWidth = 1.5;
+    c.stroke();
+  });
+}
+
+// ── XY MORPH PAD UI ──
+
+/**
+ * Initialise the XY morph field pad.
+ * Pointer position is normalised to 0..1 on both axes and stored in
+ * the module-level `morphX` / `morphY` variables, which are read
+ * by playNote() on every triggered voice.
+ *
+ * The pad responds to both mouse and touch events. The canvas itself
+ * is sized to fill its container via the aspect-ratio CSS property.
+ */
+function buildMorphPad() {
+  const container = document.getElementById('xyPadContainer');
+  const canvas = document.getElementById('morphPad');
+  const cursor = document.getElementById('morphCursor');
+  const cH = document.getElementById('xyCH');
+  const cV = document.getElementById('xyCV');
+
+  let pressing = false;
+
+  function updateMorph(e) {
+    const r = container.getBoundingClientRect();
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    morphX = Math.max(0, Math.min(1, (clientX - r.left) / r.width));
+    morphY = Math.max(0, Math.min(1, (clientY - r.top) / r.height));
+    cursor.style.left = (morphX * 100) + '%';
+    cursor.style.top = (morphY * 100) + '%';
+    cH.style.top = (morphY * 100) + '%';
+    cV.style.left = (morphX * 100) + '%';
+    drawMorphPad();
+  }
+
+  container.addEventListener('mousedown', e => { pressing = true; updateMorph(e); });
+  window.addEventListener('mousemove', e => { if (pressing) updateMorph(e); });
+  window.addEventListener('mouseup', () => { pressing = false; });
+  container.addEventListener('touchstart', e => { pressing = true; updateMorph(e); e.preventDefault(); }, { passive: false });
+  window.addEventListener('touchmove', e => { if (pressing) updateMorph(e); }, { passive: false });
+  window.addEventListener('touchend', () => { pressing = false; });
+
+  // Initial position
+  morphX = presets[0].morphX; morphY = presets[0].morphY;
+  cursor.style.left = (morphX * 100) + '%';
+  cursor.style.top = (morphY * 100) + '%';
+  cH.style.top = (morphY * 100) + '%';
+  cV.style.left = (morphX * 100) + '%';
+
+  drawMorphPad();
+  requestAnimationFrame(morphLoop);
+}
+
+/** Animation phase for the morph pad orbital ring effect. */
+let morphPhase = 0;
+
+/** rAF loop — animates the morph pad orbital rings at ~60fps. */
+function morphLoop() {
+  morphPhase += 0.008;
+  drawMorphPad();
+  requestAnimationFrame(morphLoop);
+}
+
+/**
+ * Render the morph field canvas.
+ * Draws a radial gradient centred on the cursor position plus
+ * three animated concentric rings whose opacity pulses with morphPhase.
+ * The effect gives visual weight to the cursor's tonal "gravity".
+ */
+function drawMorphPad() {
+  const canvas = document.getElementById('morphPad');
+  const container = document.getElementById('xyPadContainer');
+  const W = container.offsetWidth || 200;
+  const H = container.offsetHeight || 200;
+  canvas.width = W * window.devicePixelRatio;
+  canvas.height = H * window.devicePixelRatio;
+  const c = canvas.getContext('2d');
+  c.scale(window.devicePixelRatio, window.devicePixelRatio);
+  const w = W, h = H;
+
+  c.clearRect(0, 0, w, h);
+  c.fillStyle = '#211f1c';
+  c.fillRect(0, 0, w, h);
+
+  // Radial field visualization
+  const px = morphX * w, py = morphY * h;
+  const grad = c.createRadialGradient(px, py, 0, px, py, Math.max(w, h) * 0.8);
+  grad.addColorStop(0, 'rgba(196,135,74,0.18)');
+  grad.addColorStop(0.4, 'rgba(196,135,74,0.04)');
+  grad.addColorStop(1, 'rgba(0,0,0,0)');
+  c.fillStyle = grad;
+  c.fillRect(0, 0, w, h);
+
+  // Subtle grid
+  c.strokeStyle = 'rgba(58,54,50,0.35)';
+  c.lineWidth = 0.5;
+  for (let i = 0; i <= 4; i++) {
+    c.beginPath(); c.moveTo(w * i / 4, 0); c.lineTo(w * i / 4, h); c.stroke();
+    c.beginPath(); c.moveTo(0, h * i / 4); c.lineTo(w, h * i / 4); c.stroke();
+  }
+
+  // Orbital rings (animated)
+  const rings = 3;
+  for (let r = 0; r < rings; r++) {
+    const radius = (r + 1) * Math.min(w, h) * 0.15;
+    const anim = Math.sin(morphPhase + r * 1.2) * 0.5 + 0.5;
+    c.beginPath();
+    c.arc(px, py, radius, 0, Math.PI * 2);
+    c.strokeStyle = `rgba(196,135,74,${0.04 + anim * 0.04})`;
+    c.lineWidth = 0.8;
+    c.stroke();
+  }
+}
+
+// ── CHROMATIC KEYBOARD ──
+
+/** Semitone offsets for white keys within one octave (C D E F G A B). */
+const WHITE_NOTES = [0, 2, 4, 5, 7, 9, 11];
+
+/**
+ * Semitone offsets for black keys, indexed by their left white-key position.
+ * null = no black key to the right of this white key (E and B).
+ */
+const BLACK_OFFSETS = [1, 3, null, 6, 8, 10, null];
+
+/** MIDI note number of C in the lowest displayed octave. */
+const BASE_OCTAVE = 4;
+
+/** Number of octaves shown on the keyboard. */
+const NUM_OCTAVES = 2;
+
+/** Total number of white keys displayed. */
+const KEYS_WHITE = NUM_OCTAVES * 7;
+
+/**
+ * Computer keyboard → semitone offset mapping.
+ * Offsets are relative to C4 (MIDI 60). Three rows give three playable octaves.
+ *   Bottom row (Z–M): C4–B4
+ *   Home row  (A–J):  C5–B5
+ *   Top row   (Q–U):  C6–B6
+ */
+const KEY_MAP = {
+  'z': 0,  'x': 2,  'c': 4,  'v': 5,  'b': 7,  'n': 9,  'm': 11,
+  'a': 12, 's': 14, 'd': 16, 'f': 17, 'g': 19, 'h': 21, 'j': 23,
+  'q': 24, 'w': 26, 'e': 28, 'r': 29, 't': 31, 'y': 33, 'u': 35,
+};
+
+/**
+ * Convert a semitone offset (relative to C4 = 261.63 Hz) to a frequency in Hz.
+ * Uses equal temperament: f = 261.63 × 2^(semitones/12)
+ *
+ * @param {number} semitones - offset from C4 (positive = higher)
+ * @returns {number} frequency in Hz
+ */
+function noteToFreq(semitones) {
+  return 261.63 * Math.pow(2, semitones / 12);
+}
+
+/**
+ * Tracks all currently pressed keys/notes to prevent duplicate triggers
+ * and to correctly release notes on mouseup / keyup.
+ * Format: Set of noteKey strings (e.g. 'kb_z', 'mouse_60')
+ */
+let activeKeyboardNotes = new Set();
+
+/**
+ * Initialise the canvas keyboard: event listeners for click, release,
+ * and computer keyboard input. Also sets up a resize observer so the
+ * canvas redraws correctly when the container width changes.
+ */
+function buildKeyboard() {
+  const canvas = document.getElementById('keyboardCanvas');
+  const wrap = canvas.parentElement;
+
+  function resize() {
+    canvas.width = wrap.offsetWidth * window.devicePixelRatio;
+    canvas.height = wrap.offsetHeight * window.devicePixelRatio;
+    drawKeyboard();
+  }
+
+  resize();
+  window.addEventListener('resize', resize);
+
+  canvas.addEventListener('mousedown', e => {
+    const note = getNoteAtXY(e, canvas, wrap);
+    if (note !== null) {
+      activeKeyboardNotes.add('mouse_' + note);
+      playNote(noteToFreq(note - 48), 'mouse_' + note);
+      drawKeyboard(note);
+    }
+  });
+
+  canvas.addEventListener('mouseup', e => {
+    activeKeyboardNotes.forEach(k => {
+      if (k.startsWith('mouse_')) { releaseNote(k); activeKeyboardNotes.delete(k); }
+    });
+    drawKeyboard();
+  });
+
+  canvas.addEventListener('mouseleave', () => {
+    activeKeyboardNotes.forEach(k => {
+      if (k.startsWith('mouse_')) { releaseNote(k); activeKeyboardNotes.delete(k); }
+    });
+    drawKeyboard();
+  });
+
+  // Computer keyboard
+  document.addEventListener('keydown', e => {
+    if (e.repeat) return;
+    const semi = KEY_MAP[e.key.toLowerCase()];
+    if (semi === undefined) return;
+    const noteKey = 'kb_' + e.key.toLowerCase();
+    if (activeKeyboardNotes.has(noteKey)) return;
+    activeKeyboardNotes.add(noteKey);
+    const freq = noteToFreq(semi);
+    playNote(freq, noteKey);
+    drawKeyboard();
+  });
+
+  document.addEventListener('keyup', e => {
+    const noteKey = 'kb_' + e.key.toLowerCase();
+    if (activeKeyboardNotes.has(noteKey)) {
+      releaseNote(noteKey);
+      activeKeyboardNotes.delete(noteKey);
+      drawKeyboard();
+    }
+  });
+}
+
+/**
+ * Determine which MIDI note number was clicked on the keyboard canvas.
+ * Black keys are checked first (they sit on top of white keys visually).
+ *
+ * @param {MouseEvent} e    - the mouse event
+ * @param {HTMLCanvasElement} canvas
+ * @param {HTMLElement} wrap - parent element (used for layout dimensions)
+ * @returns {number|null} MIDI note number, or null if click is off the keyboard
+ */
+function getNoteAtXY(e, canvas, wrap) {
+  const r = canvas.getBoundingClientRect();
+  const x = (e.clientX - r.left);
+  const y = (e.clientY - r.top);
+  const W = wrap.offsetWidth, H = wrap.offsetHeight;
+  const wkW = W / KEYS_WHITE;
+  const bkW = wkW * 0.6;
+  const bkH = H * 0.58;
+
+  // Check black keys first
+  for (let oct = 0; oct < NUM_OCTAVES; oct++) {
+    for (let wi = 0; wi < 7; wi++) {
+      const bo = BLACK_OFFSETS[wi];
+      if (bo === null) continue;
+      const bx = (oct * 7 + wi + 0.65) * wkW - bkW / 2;
+      if (x >= bx && x <= bx + bkW && y <= bkH) {
+        return BASE_OCTAVE * 12 + oct * 12 + bo;
+      }
+    }
+  }
+  // White keys
+  const wi = Math.floor(x / wkW);
+  if (wi < 0 || wi >= KEYS_WHITE) return null;
+  const oct = Math.floor(wi / 7);
+  const pos = wi % 7;
+  return BASE_OCTAVE * 12 + oct * 12 + WHITE_NOTES[pos];
+}
+
+/**
+ * Render the piano keyboard canvas.
+ * White keys are drawn first as a full-height row, black keys overlaid on top.
+ * Active (pressed) keys are tinted with the accent colour.
+ * C note labels are rendered at the bottom of each C key.
+ *
+ * The canvas transform is reset at the end of each draw call to prevent
+ * cumulative DPI scale drift across repeated redraws.
+ *
+ * @param {number|null} pressedNote - MIDI note to highlight (transient, from mousedown)
+ */
+function drawKeyboard(pressedNote = null) {
+  const canvas = document.getElementById('keyboardCanvas');
+  const wrap = canvas.parentElement;
+  const W = wrap.offsetWidth, H = wrap.offsetHeight;
+  const dpr = window.devicePixelRatio;
+  const c = canvas.getContext('2d');
+  c.clearRect(0, 0, canvas.width, canvas.height);
+  c.scale(dpr, dpr);
+
+  const wkW = W / KEYS_WHITE;
+  const bkW = wkW * 0.6;
+  const bkH = H * 0.58;
+  const radius = 3;
+
+  // White keys
+  for (let i = 0; i < KEYS_WHITE; i++) {
+    const oct = Math.floor(i / 7);
+    const pos = i % 7;
+    const semi = BASE_OCTAVE * 12 + oct * 12 + WHITE_NOTES[pos];
+    const isActive = [...activeKeyboardNotes].some(k => parseInt(k.split('_')[1]) === semi) || semi === pressedNote;
+    const x = i * wkW;
+
+    const grad = c.createLinearGradient(x, 0, x, H);
+    if (isActive) {
+      grad.addColorStop(0, '#d4a86a');
+      grad.addColorStop(1, '#a07040');
+    } else {
+      grad.addColorStop(0, '#e8e0d4');
+      grad.addColorStop(0.7, '#d0c8bc');
+      grad.addColorStop(1, '#b8b0a4');
+    }
+    c.fillStyle = grad;
+    c.beginPath();
+    c.roundRect(x + 1, 0, wkW - 2, H - 1, [0, 0, radius, radius]);
+    c.fill();
+    c.strokeStyle = '#2c2926';
+    c.lineWidth = 0.5;
+    c.stroke();
+
+    // Highlight
+    if (!isActive) {
+      c.fillStyle = 'rgba(255,250,245,0.4)';
+      c.fillRect(x + 2, 1, wkW * 0.3, H * 0.15);
+    }
+
+    // Note label (C only)
+    if (pos === 0) {
+      c.fillStyle = isActive ? '#2c1a08' : '#7a7168';
+      c.font = `${Math.max(7, wkW * 0.3)}px DM Mono`;
+      c.textAlign = 'center';
+      c.fillText('C' + (BASE_OCTAVE + oct), x + wkW / 2, H - 5);
+    }
+  }
+
+  // Black keys
+  for (let oct = 0; oct < NUM_OCTAVES; oct++) {
+    for (let wi = 0; wi < 7; wi++) {
+      const bo = BLACK_OFFSETS[wi];
+      if (bo === null) continue;
+      const semi = BASE_OCTAVE * 12 + oct * 12 + bo;
+      const isActive = [...activeKeyboardNotes].some(k => parseInt(k.split('_')[1]) === semi) || semi === pressedNote;
+      const bx = (oct * 7 + wi + 0.65) * wkW - bkW / 2;
+
+      const grad = c.createLinearGradient(bx, 0, bx, bkH);
+      if (isActive) {
+        grad.addColorStop(0, '#c4874a');
+        grad.addColorStop(1, '#7a5228');
+      } else {
+        grad.addColorStop(0, '#2c2420');
+        grad.addColorStop(1, '#181412');
+      }
+      c.fillStyle = grad;
+      c.beginPath();
+      c.roundRect(bx, 0, bkW, bkH, [0, 0, 2, 2]);
+      c.fill();
+
+      if (!isActive) {
+        c.fillStyle = 'rgba(255,240,220,0.06)';
+        c.fillRect(bx + 2, 1, bkW * 0.35, bkH * 0.55);
+      }
+    }
+  }
+
+  c.setTransform(1, 0, 0, 1, 0, 0);
+}
+
+// ── PRESET MANAGEMENT ──
+
+/**
+ * Build the preset button strip from the `presets` data array.
+ * Clicking a preset button calls loadPreset() and updates the active state.
+ */
+function buildPresets() {
+  const strip = document.getElementById('presetStrip');
+  presets.forEach((p, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'preset-btn' + (i === 0 ? ' active' : '');
+    btn.textContent = p.name;
+    btn.addEventListener('click', () => {
+      loadPreset(i);
+      strip.querySelectorAll('.preset-btn').forEach((b, j) => b.classList.toggle('active', j === i));
+    });
+    strip.appendChild(btn);
+  });
+}
+
+/**
+ * Load a preset by index into the instrument state.
+ * Updates: knob values, envelope sliders, spectral nodes, morph field position.
+ * Does not trigger any audio — state is applied to the next note played.
+ *
+ * @param {number} i - index into the `presets` array
+ */
+function loadPreset(i) {
+  activePreset = i;
+  const p = presets[i];
+  Object.keys(p).forEach(key => {
+    const kDef = knobs.find(k => k.id === key);
+    if (kDef) {
+      knobValues[key] = p[key];
+      updateKnob(key, kDef, p[key]);
+    }
+  });
+  if (p.env) {
+    Object.assign(env, p.env);
+    document.querySelectorAll('.env-slider').forEach((s, si) => {
+      const keys = ['attack','decay','sustain','release'];
+      s.value = env[keys[si]];
+      s.parentElement.querySelector('.env-val').textContent = env[keys[si]].toFixed(2);
+    });
+    drawEnvCanvas();
+  }
+  if (p.nodes) {
+    spectralNodes = p.nodes.map(([x, y]) => ({ x, y }));
+  }
+  if (p.morphX !== undefined) {
+    morphX = p.morphX; morphY = p.morphY;
+    const cursor = document.getElementById('morphCursor');
+    cursor.style.left = (morphX * 100) + '%';
+    cursor.style.top = (morphY * 100) + '%';
+    document.getElementById('xyCH').style.top = (morphY * 100) + '%';
+    document.getElementById('xyCV').style.left = (morphX * 100) + '%';
+  }
+}
+
+// ── VOICE INDICATOR ──
+
+/** Build the row of 8 voice indicator dots in the output panel. */
+function buildVoiceDots() {
+  const container = document.getElementById('voiceDots');
+  for (let i = 0; i < MAX_VOICES; i++) {
+    const d = document.createElement('div');
+    d.className = 'voice-dot';
+    container.appendChild(d);
+  }
+}
+
+// ── TOOLTIP ──
+
+/** @type {HTMLElement} Shared floating tooltip element. */
+const tooltipEl = document.getElementById('tooltip');
+
+/**
+ * Show the tooltip with `text` near the mouse pointer.
+ * @param {string} text
+ * @param {MouseEvent} e
+ */
+function showTooltip(text, e) {
+  tooltipEl.textContent = text;
+  tooltipEl.classList.add('visible');
+  updateTooltipPos(e);
+}
+
+/** Hide the tooltip. */
+function hideTooltip() { tooltipEl.classList.remove('visible'); }
+
+/**
+ * Reposition the tooltip to follow the mouse.
+ * @param {MouseEvent} e
+ */
+function updateTooltipPos(e) {
+  tooltipEl.style.left = (e.clientX + 12) + 'px';
+  tooltipEl.style.top  = (e.clientY - 28) + 'px';
+}
+
+// ── BOOTSTRAP ──
+
+/**
+ * Entry point — build all UI components once the DOM is ready.
+ * initAudio() is deferred to the first click to comply with browser
+ * autoplay policy (AudioContext must be created in a user gesture).
+ */
+window.addEventListener('DOMContentLoaded', () => {
+  buildKnobs();
+  buildEnvelope();
+  buildFX();
+  buildSpectral();
+  buildMorphPad();
+  buildKeyboard();
+  buildPresets();
+  buildVoiceDots();
+
+  // Click anywhere to init audio context (browser policy)
+  document.addEventListener('click', initAudio, { once: false });
+
+  // Keyboard shortcut hints
+  console.log('FORMA — Keyboard shortcuts: Z-M (lower oct), A-L (upper oct), Q-U (top oct)');
+});
+
+window.addEventListener('resize', () => {
+  drawEnvCanvas();
+  drawKeyboard();
+});
+</script>
+</body>
+</html>
