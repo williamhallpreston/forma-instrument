@@ -193,4 +193,69 @@ describe('applyMorph', () => {
     expect(result[0]).toBeCloseTo(result[1], 5);
     expect(result[2]).toBeCloseTo(result[3], 5);
   });
+
+  test('mutates and returns the same Float32Array (in-place)', () => {
+    const amps = new Float32Array([1, 0.5, 0.25]);
+    const result = applyMorph(amps, 0.5, 0);
+    expect(result).toBe(amps);
+  });
+
+  test('single-element array does not throw and returns a value', () => {
+    const amps = new Float32Array([1]);
+    expect(() => applyMorph(amps, 0.5, 0.5)).not.toThrow();
+    expect(applyMorph(new Float32Array([1]), 0.5, 0.5)[0]).toBeGreaterThanOrEqual(0);
+  });
+});
+
+describe('noteToFreq — additional edge cases', () => {
+  test('fractional semitones return a value between the two nearest integers', () => {
+    const half = noteToFreq(0.5);
+    expect(half).toBeGreaterThan(noteToFreq(0));
+    expect(half).toBeLessThan(noteToFreq(1));
+  });
+
+  test('large positive semitone (36 = C7) is above C4', () => {
+    expect(noteToFreq(36)).toBeGreaterThan(noteToFreq(0));
+  });
+
+  test('large negative semitone (-36 = C1) is below C4', () => {
+    expect(noteToFreq(-36)).toBeLessThan(noteToFreq(0));
+  });
+
+  test('each octave exactly doubles the frequency', () => {
+    for (let oct = -2; oct <= 4; oct++) {
+      expect(noteToFreq(oct * 12 + 12)).toBeCloseTo(noteToFreq(oct * 12) * 2, 8);
+    }
+  });
+});
+
+describe('getSpectralAmps — additional edge cases', () => {
+  test('numHarmonics=1 returns a single-element array', () => {
+    const amps = getSpectralAmps([], 1);
+    expect(amps.length).toBe(1);
+    expect(amps[0]).toBeGreaterThan(0);
+  });
+
+  test('with nodes, result length always matches numHarmonics', () => {
+    [1, 4, 8, 16, 24].forEach(n => {
+      expect(getSpectralAmps([{ x: 0.5, y: 0.5 }], n).length).toBe(n);
+    });
+  });
+
+  test('node order does not affect output (unsorted vs sorted nodes)', () => {
+    const nodesAB = [{ x: 0.2, y: 0.3 }, { x: 0.7, y: 0.1 }];
+    const nodesBA = [{ x: 0.7, y: 0.1 }, { x: 0.2, y: 0.3 }];
+    const ampsAB = getSpectralAmps(nodesAB, 8);
+    const ampsBA = getSpectralAmps(nodesBA, 8);
+    for (let i = 0; i < 8; i++) {
+      expect(ampsAB[i]).toBeCloseTo(ampsBA[i], 10);
+    }
+  });
+
+  test('default falloff: amplitude at harmonic n < amplitude at harmonic 0 for all n > 0', () => {
+    const amps = getSpectralAmps([], 24);
+    for (let i = 1; i < 24; i++) {
+      expect(amps[i]).toBeLessThan(amps[0]);
+    }
+  });
 });
