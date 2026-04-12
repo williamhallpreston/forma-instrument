@@ -8,40 +8,31 @@
   @import url('https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap');
 
   :root {
-    --ink: #1a1714;
-    --panel: #211f1c;
-    --surface: #2c2926;
-    --rail: #3a3632;
-    --bone: #e8e0d4;
-    --parchment: #c8bfb0;
-    --muted: #7a7168;
-    --accent: #c4874a;
-    --accent-dim: #8a5c2e;
-    --glow: rgba(196, 135, 74, 0.18);
-    --warm-white: #f0ead8;
-    --shadow-deep: rgba(0,0,0,0.6);
-    --shadow-mid: rgba(0,0,0,0.35);
-    --highlight: rgba(255,245,228,0.07);
+    --bg:          #F5ECF3;
+    --panel:       #FFFFFF;
+    --surface:     #FFF2F9;
+    --rail:        #F0CCDF;
+    --ink:         #1A0810;
+    --parchment:   #8A3C6A;
+    --muted:       #C080A8;
+    --accent:      #FF3DA6;
+    --accent-dim:  #D4178C;
+    --glow:        rgba(255, 61, 166, 0.20);
+    --warm-white:  #FFFFFF;
+    --shadow-deep: rgba(200, 10, 110, 0.14);
+    --shadow-mid:  rgba(255, 61, 166, 0.08);
+    --highlight:   rgba(255, 255, 255, 0.90);
   }
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   html, body {
     width: 100%; height: 100%; min-height: 100vh;
-    background: var(--ink);
-    color: var(--bone);
+    background: var(--bg);
+    color: var(--ink);
     font-family: 'DM Mono', monospace;
     overflow-x: hidden;
     -webkit-font-smoothing: antialiased;
-  }
-
-  /* ── GRAIN OVERLAY ── */
-  body::before {
-    content: '';
-    position: fixed; inset: 0; z-index: 999; pointer-events: none;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
-    opacity: 0.032;
-    mix-blend-mode: overlay;
   }
 
   /* ── WRAPPER ── */
@@ -60,24 +51,23 @@
     display: flex;
     align-items: flex-end;
     justify-content: space-between;
-    padding: 20px 0 18px;
+    padding: 20px 0 20px;
     border-bottom: 1px solid var(--rail);
     margin-bottom: 24px;
   }
 
-  .brand {
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-  }
+  .brand { display: flex; flex-direction: column; gap: 4px; }
 
   .brand-name {
     font-family: 'Cormorant Garamond', serif;
-    font-size: 42px;
+    font-size: 46px;
     font-weight: 300;
     letter-spacing: 0.22em;
-    color: var(--warm-white);
     line-height: 1;
+    background: linear-gradient(160deg, #FF90CC 0%, #FF3DA6 42%, #C4008C 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
 
   .brand-sub {
@@ -105,22 +95,23 @@
   }
 
   .status-dot {
-    width: 6px; height: 6px;
+    width: 7px; height: 7px;
     border-radius: 50%;
-    background: var(--accent);
-    box-shadow: 0 0 6px var(--accent);
+    background: radial-gradient(circle at 35% 30%, #FF90CC, #FF3DA6);
+    box-shadow: 0 0 8px rgba(255,61,166,0.7);
     animation: pulse 2.4s ease-in-out infinite;
   }
 
   @keyframes pulse {
-    0%, 100% { opacity: 1; box-shadow: 0 0 6px var(--accent); }
-    50% { opacity: 0.5; box-shadow: 0 0 2px var(--accent); }
+    0%, 100% { opacity: 1; box-shadow: 0 0 8px rgba(255,61,166,0.7); }
+    50%       { opacity: 0.5; box-shadow: 0 0 3px rgba(255,61,166,0.3); }
   }
 
   .version-tag {
     font-size: 9px;
     letter-spacing: 0.2em;
-    color: var(--rail);
+    color: var(--muted);
+    opacity: 0.5;
   }
 
   /* ── MAIN LAYOUT ── */
@@ -131,33 +122,20 @@
     flex: 1;
   }
 
-  .left-column {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-  }
-
-  .right-column {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-  }
+  .left-column  { display: flex; flex-direction: column; gap: 16px; }
+  .right-column { display: flex; flex-direction: column; gap: 16px; }
 
   /* ── PANELS ── */
   .panel {
     background: var(--panel);
-    border: 1px solid var(--rail);
-    border-radius: 4px;
+    border: 1px solid rgba(255, 61, 166, 0.10);
+    border-radius: 18px;
     position: relative;
     overflow: hidden;
-  }
-
-  .panel::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 1px;
-    background: var(--highlight);
+    box-shadow:
+      0 4px 28px rgba(255, 61, 166, 0.07),
+      0 1px 4px rgba(200, 10, 110, 0.04),
+      inset 0 1.5px 0 rgba(255, 255, 255, 0.90);
   }
 
   .panel-label {
@@ -165,7 +143,7 @@
     letter-spacing: 0.4em;
     color: var(--muted);
     text-transform: uppercase;
-    padding: 10px 14px 0;
+    padding: 13px 16px 0;
     margin-bottom: 10px;
     display: flex;
     align-items: center;
@@ -177,12 +155,11 @@
     height: 1px;
     background: var(--rail);
     margin-left: 10px;
+    opacity: 0.6;
   }
 
   /* ── SPECTRAL CANVAS ── */
-  #spectral-panel {
-    padding-bottom: 14px;
-  }
+  #spectral-panel { padding-bottom: 14px; }
 
   #spectralCanvas {
     width: 100%;
@@ -196,8 +173,8 @@
     letter-spacing: 0.2em;
     color: var(--muted);
     text-align: center;
-    padding: 6px 0 0;
-    opacity: 0.7;
+    padding: 7px 0 0;
+    opacity: 0.6;
   }
 
   /* ── MORPH XY PAD ── */
@@ -207,17 +184,14 @@
     position: relative;
     width: 100%;
     aspect-ratio: 1;
-    max-height: 260px;
+    max-height: 270px;
   }
 
   #morphPad {
     width: 100%; height: 100%;
-    border: 1px solid var(--rail);
-    border-radius: 3px;
     cursor: crosshair;
-    background: var(--surface);
-    position: relative;
     display: block;
+    border-radius: 50%;
   }
 
   /* ── KNOB SECTION ── */
@@ -238,18 +212,17 @@
     min-width: 56px;
   }
 
-  .knob-wrap {
-    position: relative;
-    width: 46px;
-    height: 46px;
-  }
+  .knob-wrap { position: relative; width: 46px; height: 46px; }
 
   .knob-svg {
-    width: 100%;
-    height: 100%;
+    width: 100%; height: 100%;
     cursor: ns-resize;
     user-select: none;
+    filter: drop-shadow(0 3px 7px rgba(255,61,166,0.28));
+    transition: filter 0.15s;
   }
+
+  .knob-svg:hover { filter: drop-shadow(0 5px 14px rgba(255,61,166,0.48)); }
 
   .knob-label {
     font-size: 7.5px;
@@ -266,13 +239,14 @@
     letter-spacing: 0.1em;
     min-width: 36px;
     text-align: center;
+    font-weight: 500;
   }
 
   /* ── PRESET STRIP ── */
   .preset-strip {
     display: flex;
-    gap: 6px;
-    padding: 12px 14px;
+    gap: 7px;
+    padding: 4px 16px 16px;
     overflow-x: auto;
     scrollbar-width: none;
     flex-wrap: wrap;
@@ -284,112 +258,100 @@
     flex-shrink: 0;
     font-family: 'DM Mono', monospace;
     font-size: 8px;
-    letter-spacing: 0.2em;
+    letter-spacing: 0.18em;
     text-transform: uppercase;
     color: var(--muted);
     background: var(--surface);
-    border: 1px solid var(--rail);
-    border-radius: 2px;
-    padding: 6px 10px;
+    border: 1.5px solid rgba(255, 61, 166, 0.12);
+    border-radius: 100px;
+    padding: 7px 14px;
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
     white-space: nowrap;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.75);
   }
 
   .preset-btn:hover {
-    color: var(--bone);
-    border-color: var(--accent-dim);
+    color: var(--accent);
+    border-color: rgba(255, 61, 166, 0.35);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(255,61,166,0.15), inset 0 1px 0 rgba(255,255,255,0.75);
   }
 
   .preset-btn.active {
-    color: var(--accent);
-    border-color: var(--accent);
-    background: rgba(196,135,74,0.08);
+    color: #FFFFFF;
+    background: linear-gradient(145deg, #FF72BC 0%, #FF3DA6 50%, #C4008C 100%);
+    border-color: #FF3DA6;
+    box-shadow: 0 4px 18px rgba(255,61,166,0.40), inset 0 1px 0 rgba(255,255,255,0.30);
+    transform: translateY(-1px);
   }
 
   /* ── ENVELOPE ── */
-  #env-canvas {
-    width: 100%;
-    height: 80px;
-    display: block;
-    cursor: pointer;
-  }
+  #env-canvas { width: 100%; height: 80px; display: block; cursor: pointer; }
 
   .env-row {
     display: flex;
     gap: 10px;
-    padding: 8px 14px 14px;
+    padding: 8px 16px 14px;
     justify-content: space-between;
   }
 
-  .env-unit {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-    flex: 1;
-  }
+  .env-unit { display: flex; flex-direction: column; align-items: center; gap: 5px; flex: 1; }
 
   .env-slider {
     -webkit-appearance: none;
     appearance: none;
     width: 100%;
-    height: 2px;
+    height: 3px;
     background: var(--rail);
-    border-radius: 1px;
+    border-radius: 2px;
     outline: none;
     cursor: pointer;
   }
 
   .env-slider::-webkit-slider-thumb {
     -webkit-appearance: none;
-    width: 10px; height: 10px;
+    width: 12px; height: 12px;
     border-radius: 50%;
-    background: var(--accent);
-    box-shadow: 0 0 0 2px rgba(196,135,74,0.2);
+    background: radial-gradient(circle at 35% 30%, #FF90CC 0%, #FF3DA6 55%, #C4008C 100%);
+    box-shadow: 0 2px 8px rgba(255,61,166,0.45), inset 0 1px 0 rgba(255,255,255,0.5);
     cursor: grab;
-    transition: box-shadow 0.1s;
+    transition: transform 0.1s, box-shadow 0.1s;
   }
 
-  .env-slider::-webkit-slider-thumb:active { cursor: grabbing; box-shadow: 0 0 0 4px rgba(196,135,74,0.25); }
-
-  .env-label {
-    font-size: 7.5px;
-    letter-spacing: 0.3em;
-    color: var(--muted);
-    text-transform: uppercase;
+  .env-slider::-webkit-slider-thumb:active {
+    cursor: grabbing;
+    transform: scale(1.25);
+    box-shadow: 0 3px 14px rgba(255,61,166,0.60);
   }
 
-  .env-val {
-    font-size: 8px;
-    color: var(--parchment);
-    letter-spacing: 0.1em;
-  }
+  .env-label { font-size: 7.5px; letter-spacing: 0.3em; color: var(--muted); text-transform: uppercase; }
+  .env-val   { font-size: 8px; color: var(--parchment); letter-spacing: 0.1em; }
 
   /* ── FX TOGGLES ── */
-  .fx-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-    padding: 8px 14px 14px;
-  }
+  .fx-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 4px 16px 16px; }
 
   .fx-toggle {
     position: relative;
     background: var(--surface);
-    border: 1px solid var(--rail);
-    border-radius: 3px;
-    padding: 8px 10px;
+    border: 1.5px solid rgba(255, 61, 166, 0.10);
+    border-radius: 12px;
+    padding: 10px 12px;
     cursor: pointer;
-    transition: all 0.15s;
+    transition: all 0.18s ease;
     user-select: none;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.80);
   }
 
-  .fx-toggle:hover { border-color: var(--accent-dim); }
+  .fx-toggle:hover {
+    border-color: rgba(255, 61, 166, 0.28);
+    box-shadow: 0 2px 10px rgba(255,61,166,0.10), inset 0 1px 0 rgba(255,255,255,0.80);
+  }
 
   .fx-toggle.on {
-    border-color: var(--accent);
-    background: rgba(196,135,74,0.06);
+    border-color: rgba(255, 61, 166, 0.38);
+    background: linear-gradient(155deg, rgba(255,61,166,0.10) 0%, rgba(255,61,166,0.03) 100%);
+    box-shadow: 0 2px 12px rgba(255,61,166,0.14), inset 0 1px 0 rgba(255,255,255,0.65);
   }
 
   .fx-toggle-name {
@@ -405,196 +367,147 @@
 
   .fx-toggle-led {
     position: absolute;
-    top: 8px; right: 8px;
+    top: 10px; right: 10px;
     width: 5px; height: 5px;
     border-radius: 50%;
     background: var(--rail);
-    transition: all 0.15s;
+    transition: all 0.18s;
   }
 
   .fx-toggle.on .fx-toggle-led {
-    background: var(--accent);
-    box-shadow: 0 0 5px var(--accent);
+    background: radial-gradient(circle at 35% 30%, #FF90CC, #FF3DA6);
+    box-shadow: 0 0 7px rgba(255,61,166,0.70);
   }
 
   /* ── VOICE DISPLAY ── */
-  .voice-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 14px 12px;
-  }
-
+  .voice-row { display: flex; align-items: center; gap: 8px; padding: 10px 16px 14px; }
   .voice-label { font-size: 8px; letter-spacing: 0.3em; color: var(--muted); text-transform: uppercase; }
-
-  .voice-dots {
-    display: flex;
-    gap: 5px;
-    flex: 1;
-  }
+  .voice-dots  { display: flex; gap: 6px; flex: 1; }
 
   .voice-dot {
-    width: 8px; height: 8px;
+    width: 9px; height: 9px;
     border-radius: 50%;
     background: var(--rail);
-    border: 1px solid var(--surface);
+    border: 1.5px solid rgba(255,255,255,0.6);
     transition: all 0.08s;
   }
 
   .voice-dot.active {
-    background: var(--accent);
-    box-shadow: 0 0 4px var(--accent);
+    background: radial-gradient(circle at 38% 32%, #FF90CC 0%, #FF3DA6 100%);
+    box-shadow: 0 0 6px rgba(255,61,166,0.55), inset 0 1px 0 rgba(255,255,255,0.35);
+    border-color: rgba(255,61,166,0.20);
   }
 
   /* ── KEYBOARD ── */
-  #keyboard-panel {
-    padding: 14px 14px 16px;
-  }
+  #keyboard-panel { padding: 14px 16px 16px; }
 
   .keyboard-wrap {
     position: relative;
     width: 100%;
     height: 100px;
     user-select: none;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(255,61,166,0.06);
   }
 
-  #keyboardCanvas {
-    width: 100%;
-    height: 100%;
-    cursor: pointer;
-    display: block;
-    border-radius: 2px;
-  }
+  #keyboardCanvas { width: 100%; height: 100%; cursor: pointer; display: block; }
 
   /* ── OUTPUT METER ── */
-  .meter-wrap {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    padding: 10px 14px 14px;
-  }
-
-  .meter-bar-wrap {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
+  .meter-wrap { display: flex; flex-direction: column; gap: 5px; padding: 10px 16px 14px; }
+  .meter-bar-wrap { display: flex; align-items: center; gap: 8px; }
   .meter-ch { font-size: 7.5px; letter-spacing: 0.2em; color: var(--muted); width: 10px; }
 
   .meter-track {
-    flex: 1;
-    height: 5px;
-    background: var(--surface);
-    border-radius: 2px;
+    flex: 1; height: 5px;
+    background: var(--rail);
+    border-radius: 3px;
     overflow: hidden;
-    position: relative;
+    box-shadow: inset 0 1px 2px rgba(200,10,110,0.08);
   }
 
   .meter-fill {
     height: 100%;
-    border-radius: 2px;
+    border-radius: 3px;
     transition: width 0.05s linear;
-    background: linear-gradient(90deg, #5a9e6a 0%, #a3c47a 60%, #c4874a 85%, #c45050 100%);
+    background: linear-gradient(90deg, #FF90CC 0%, #FF3DA6 55%, #D4178C 80%, #8A0048 100%);
   }
 
-  /* ── RIGHT COLUMN ── */
+  /* ── RIGHT COLUMN / MORPH ── */
   .morph-section {
-    padding: 14px;
+    padding: 6px;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 12px;
+    align-items: center;
   }
 
   .xy-corner-label {
     position: absolute;
     font-size: 7px;
-    letter-spacing: 0.2em;
+    letter-spacing: 0.18em;
     text-transform: uppercase;
     color: var(--muted);
     pointer-events: none;
+    opacity: 0.75;
   }
 
-  .xy-corner-label.tl { top: 4px; left: 5px; }
-  .xy-corner-label.tr { top: 4px; right: 5px; }
-  .xy-corner-label.bl { bottom: 4px; left: 5px; }
-  .xy-corner-label.br { bottom: 4px; right: 5px; }
+  .xy-corner-label.tl { top: 3px; left: 4px; }
+  .xy-corner-label.tr { top: 3px; right: 4px; }
+  .xy-corner-label.bl { bottom: 3px; left: 4px; }
+  .xy-corner-label.br { bottom: 3px; right: 4px; }
 
-  .xy-crosshair-h, .xy-crosshair-v {
-    position: absolute;
-    background: rgba(196,135,74,0.15);
-    pointer-events: none;
-    transition: none;
-  }
-
-  .xy-crosshair-h { height: 1px; left: 0; right: 0; }
-  .xy-crosshair-v { width: 1px; top: 0; bottom: 0; }
-
-  .morph-cursor {
-    position: absolute;
-    width: 12px; height: 12px;
-    border-radius: 50%;
-    background: var(--accent);
-    box-shadow: 0 0 10px rgba(196,135,74,0.6), 0 0 2px var(--accent);
-    transform: translate(-50%, -50%);
-    pointer-events: none;
-    transition: box-shadow 0.1s;
-  }
+  .xy-crosshair-h, .xy-crosshair-v { display: none; }
+  .morph-cursor { display: none; }
 
   .morph-xy-labels {
     display: flex;
     justify-content: space-between;
     font-size: 8px;
-    letter-spacing: 0.2em;
+    letter-spacing: 0.18em;
     color: var(--muted);
+    width: 100%;
+    opacity: 0.75;
   }
 
   /* ── PRODUCT STORY ── */
-  #story-panel {
-    margin-top: 8px;
-    grid-column: 1 / -1;
-  }
+  #story-panel { margin-top: 8px; grid-column: 1 / -1; }
 
   .story-body {
-    padding: 14px 18px 18px;
+    padding: 14px 20px 20px;
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
     gap: 20px;
   }
 
-  .story-block {}
-
   .story-heading {
     font-family: 'Cormorant Garamond', serif;
     font-style: italic;
-    font-size: 13px;
+    font-size: 14px;
     color: var(--accent);
-    letter-spacing: 0.08em;
-    margin-bottom: 6px;
+    letter-spacing: 0.06em;
+    margin-bottom: 7px;
   }
 
-  .story-text {
-    font-size: 10px;
-    line-height: 1.7;
-    color: var(--muted);
-    letter-spacing: 0.03em;
-  }
+  .story-text { font-size: 10px; line-height: 1.78; color: var(--muted); letter-spacing: 0.02em; }
 
   /* ── TOOLTIP ── */
   .tooltip {
     position: fixed;
     pointer-events: none;
-    background: var(--ink);
-    border: 1px solid var(--rail);
+    background: rgba(255,255,255,0.95);
+    border: 1px solid rgba(255,61,166,0.18);
     color: var(--parchment);
     font-size: 9px;
     letter-spacing: 0.18em;
-    padding: 4px 8px;
-    border-radius: 2px;
+    padding: 5px 11px;
+    border-radius: 100px;
     z-index: 1000;
     opacity: 0;
     transition: opacity 0.12s;
     text-transform: uppercase;
+    box-shadow: 0 4px 16px rgba(255,61,166,0.14);
+    backdrop-filter: blur(8px);
   }
 
   .tooltip.visible { opacity: 1; }
@@ -609,27 +522,11 @@
     margin-top: 24px;
   }
 
-  .footer-copy {
-    font-size: 8px;
-    letter-spacing: 0.25em;
-    color: var(--rail);
-    text-transform: uppercase;
-  }
+  .footer-copy { font-size: 8px; letter-spacing: 0.25em; color: var(--muted); text-transform: uppercase; opacity: 0.55; }
+  .footer-build { font-size: 8px; letter-spacing: 0.2em; color: var(--muted); font-style: italic; font-family: 'Cormorant Garamond', serif; opacity: 0.55; }
 
-  .footer-build {
-    font-size: 8px;
-    letter-spacing: 0.2em;
-    color: var(--rail);
-    font-style: italic;
-    font-family: 'Cormorant Garamond', serif;
-  }
-
-  /* ── SECTION DIVIDER ── */
-  .divider {
-    height: 1px;
-    background: var(--rail);
-    margin: 0 14px;
-  }
+  /* ── DIVIDER ── */
+  .divider { height: 1px; background: var(--rail); margin: 0 16px; opacity: 0.6; }
 
   /* ── RESPONSIVE ── */
   @media (max-width: 720px) {
@@ -1230,31 +1127,33 @@ function buildKnobs() {
       <div class="knob-wrap" data-id="${k.id}">
         <svg class="knob-svg" viewBox="0 0 46 46" data-id="${k.id}">
           <defs>
-            <radialGradient id="kg_${k.id}" cx="40%" cy="30%" r="65%">
-              <stop offset="0%" stop-color="#4a4540"/>
-              <stop offset="100%" stop-color="#1e1c19"/>
+            <radialGradient id="kg_${k.id}" cx="38%" cy="28%" r="65%">
+              <stop offset="0%"   stop-color="rgba(255,255,255,0.82)"/>
+              <stop offset="22%"  stop-color="#FF88CC"/>
+              <stop offset="62%"  stop-color="#FF3DA6"/>
+              <stop offset="100%" stop-color="#A80060"/>
             </radialGradient>
           </defs>
           <!-- Track -->
-          <circle cx="23" cy="23" r="18" fill="none" stroke="#3a3632" stroke-width="2.5"
+          <circle cx="23" cy="23" r="18" fill="none" stroke="rgba(255,61,166,0.13)" stroke-width="2.5"
             stroke-dasharray="${2*Math.PI*18*0.75} ${2*Math.PI*18*0.25}"
             stroke-dashoffset="${2*Math.PI*18*0.125}"
             stroke-linecap="round" transform="rotate(135 23 23)"/>
           <!-- Value arc -->
-          <circle cx="23" cy="23" r="18" fill="none" stroke="#c4874a" stroke-width="2.5"
+          <circle cx="23" cy="23" r="18" fill="none" stroke="#FF3DA6" stroke-width="2.5"
             stroke-dasharray="0 ${2*Math.PI*18}"
             stroke-linecap="round" transform="rotate(135 23 23)"
             class="knob-arc" data-max="${2*Math.PI*18*0.75}"/>
-          <!-- Body -->
+          <!-- Body — glossy pink sphere -->
           <circle cx="23" cy="23" r="14" fill="url(#kg_${k.id})"
-            stroke="#2a2724" stroke-width="1"/>
-          <!-- Highlight -->
-          <ellipse cx="19" cy="18" rx="5" ry="3" fill="rgba(255,245,228,0.06)" transform="rotate(-20 19 18)"/>
+            stroke="rgba(255,61,166,0.14)" stroke-width="0.5"/>
+          <!-- Specular highlight (upper-left, mimics sphere gloss) -->
+          <ellipse cx="18" cy="17" rx="5.5" ry="3.5" fill="rgba(255,255,255,0.55)" transform="rotate(-25 18 17)"/>
           <!-- Indicator line -->
           <line x1="23" y1="23" x2="23" y2="11"
-            stroke="#c4874a" stroke-width="1.5" stroke-linecap="round"
+            stroke="rgba(255,255,255,0.92)" stroke-width="1.5" stroke-linecap="round"
             class="knob-indicator" transform="rotate(0 23 23)"/>
-          <circle cx="23" cy="23" r="2" fill="#c4874a" opacity="0.6"/>
+          <circle cx="23" cy="23" r="2" fill="rgba(255,255,255,0.55)"/>
         </svg>
       </div>
       <div class="knob-label">${k.label}</div>
@@ -1398,11 +1297,11 @@ function drawEnvCanvas() {
   const w = W, h = 80;
 
   ctx2.clearRect(0, 0, w, h);
-  ctx2.fillStyle = '#211f1c';
+  ctx2.fillStyle = '#FFFFFF';
   ctx2.fillRect(0, 0, w, h);
 
   // Grid lines
-  ctx2.strokeStyle = '#2c2926';
+  ctx2.strokeStyle = 'rgba(255,61,166,0.06)';
   ctx2.lineWidth = 1;
   for (let i = 0; i <= 4; i++) {
     ctx2.beginPath(); ctx2.moveTo(w * i / 4, 0); ctx2.lineTo(w * i / 4, h); ctx2.stroke();
@@ -1429,17 +1328,17 @@ function drawEnvCanvas() {
 
   // Glow
   const grad = ctx2.createLinearGradient(0, 0, 0, h);
-  grad.addColorStop(0, 'rgba(196,135,74,0.3)');
-  grad.addColorStop(1, 'rgba(196,135,74,0.02)');
+  grad.addColorStop(0, 'rgba(255,61,166,0.22)');
+  grad.addColorStop(1, 'rgba(255,61,166,0.01)');
   ctx2.fillStyle = grad;
   ctx2.fill();
 
-  ctx2.strokeStyle = '#c4874a';
-  ctx2.lineWidth = 1.5;
+  ctx2.strokeStyle = '#FF3DA6';
+  ctx2.lineWidth = 2;
   ctx2.stroke();
 
   // Phase labels
-  ctx2.fillStyle = '#4a4540';
+  ctx2.fillStyle = 'rgba(255,61,166,0.28)';
   ctx2.font = '8px DM Mono';
   ['A', 'D', 'S', 'R'].forEach((l, i) => {
     const tx = [toX(t0 + (t1-t0)*0.5), toX(t1+(t2-t1)*0.5), toX(t2+(t3-t2)*0.5), toX(t3+(t4-t3)*0.5)][i];
@@ -1595,11 +1494,11 @@ function drawSpectral() {
   const w = W, h = H;
 
   c.clearRect(0, 0, w, h);
-  c.fillStyle = '#1a1714';
+  c.fillStyle = '#FFFFFF';
   c.fillRect(0, 0, w, h);
 
   // Grid
-  c.strokeStyle = 'rgba(58,54,50,0.5)';
+  c.strokeStyle = 'rgba(255,61,166,0.06)';
   c.lineWidth = 0.5;
   for (let i = 0; i <= 8; i++) {
     c.beginPath(); c.moveTo(w * i / 8, 0); c.lineTo(w * i / 8, h); c.stroke();
@@ -1624,13 +1523,13 @@ function drawSpectral() {
     const by = h - bh - 4;
 
     const grad = c.createLinearGradient(0, by, 0, h);
-    grad.addColorStop(0, `rgba(196,135,74,${0.2 + displayAmp * 0.6})`);
-    grad.addColorStop(1, 'rgba(196,135,74,0.04)');
+    grad.addColorStop(0, `rgba(255,61,166,${0.15 + displayAmp * 0.65})`);
+    grad.addColorStop(1, 'rgba(255,61,166,0.03)');
     c.fillStyle = grad;
     c.fillRect(bx, by, barW - 2, bh);
 
     // Top highlight
-    c.fillStyle = `rgba(240,234,216,${displayAmp * 0.35})`;
+    c.fillStyle = `rgba(255,255,255,${displayAmp * 0.60})`;
     c.fillRect(bx, by, barW - 2, 1.5);
   }
 
@@ -1643,8 +1542,8 @@ function drawSpectral() {
       c.lineTo(n.x * w, (1 - (1 - n.y)) * h);
     });
     c.lineTo(w, h);
-    c.strokeStyle = 'rgba(196,135,74,0.25)';
-    c.lineWidth = 1;
+    c.strokeStyle = 'rgba(255,61,166,0.22)';
+    c.lineWidth = 1.5;
     c.stroke();
   }
 
@@ -1653,14 +1552,14 @@ function drawSpectral() {
     const px = n.x * w, py = n.y * h;
     c.beginPath();
     c.arc(px, py, 5, 0, Math.PI * 2);
-    c.fillStyle = i === dragNodeIdx ? '#f0ead8' : '#c4874a';
+    c.fillStyle = i === dragNodeIdx ? '#FFFFFF' : '#FF3DA6';
     c.fill();
-    c.strokeStyle = 'rgba(196,135,74,0.4)';
+    c.strokeStyle = 'rgba(255,61,166,0.25)';
     c.lineWidth = 6;
     c.stroke();
     c.beginPath();
     c.arc(px, py, 5, 0, Math.PI * 2);
-    c.strokeStyle = i === dragNodeIdx ? 'rgba(240,234,216,0.6)' : 'rgba(196,135,74,0.8)';
+    c.strokeStyle = i === dragNodeIdx ? 'rgba(255,255,255,0.9)' : 'rgba(255,61,166,0.9)';
     c.lineWidth = 1.5;
     c.stroke();
   });
@@ -1745,34 +1644,106 @@ function drawMorphPad() {
   const w = W, h = H;
 
   c.clearRect(0, 0, w, h);
-  c.fillStyle = '#211f1c';
+
+  // ── SPHERE BACKGROUND ──
+  c.fillStyle = '#FFF2F9';
   c.fillRect(0, 0, w, h);
 
-  // Radial field visualization
-  const px = morphX * w, py = morphY * h;
-  const grad = c.createRadialGradient(px, py, 0, px, py, Math.max(w, h) * 0.8);
-  grad.addColorStop(0, 'rgba(196,135,74,0.18)');
-  grad.addColorStop(0.4, 'rgba(196,135,74,0.04)');
-  grad.addColorStop(1, 'rgba(0,0,0,0)');
-  c.fillStyle = grad;
-  c.fillRect(0, 0, w, h);
+  const cx = w / 2, cy = h / 2;
+  const sphereR = Math.min(w, h) * 0.455;
 
-  // Subtle grid
-  c.strokeStyle = 'rgba(58,54,50,0.35)';
-  c.lineWidth = 0.5;
-  for (let i = 0; i <= 4; i++) {
-    c.beginPath(); c.moveTo(w * i / 4, 0); c.lineTo(w * i / 4, h); c.stroke();
-    c.beginPath(); c.moveTo(0, h * i / 4); c.lineTo(w, h * i / 4); c.stroke();
-  }
+  // Drop shadow (soft ellipse below sphere)
+  const shadowGrad = c.createRadialGradient(cx, cy + sphereR * 0.92, 0, cx, cy + sphereR * 0.92, sphereR * 0.65);
+  shadowGrad.addColorStop(0, 'rgba(180, 0, 100, 0.22)');
+  shadowGrad.addColorStop(1, 'rgba(180, 0, 100, 0)');
+  c.fillStyle = shadowGrad;
+  c.beginPath();
+  c.ellipse(cx, cy + sphereR * 0.88, sphereR * 0.70, sphereR * 0.12, 0, 0, Math.PI * 2);
+  c.fill();
 
-  // Orbital rings (animated)
-  const rings = 3;
-  for (let r = 0; r < rings; r++) {
-    const radius = (r + 1) * Math.min(w, h) * 0.15;
-    const anim = Math.sin(morphPhase + r * 1.2) * 0.5 + 0.5;
+  // ── SPHERE BODY ──
+  const bodyGrad = c.createRadialGradient(
+    cx - sphereR * 0.18, cy - sphereR * 0.20, sphereR * 0.05,
+    cx, cy, sphereR
+  );
+  bodyGrad.addColorStop(0.00, '#FF90D0');
+  bodyGrad.addColorStop(0.28, '#FF3DA6');
+  bodyGrad.addColorStop(0.65, '#D4178C');
+  bodyGrad.addColorStop(1.00, '#8A0048');
+  c.fillStyle = bodyGrad;
+  c.beginPath();
+  c.arc(cx, cy, sphereR, 0, Math.PI * 2);
+  c.fill();
+
+  // Atmospheric edge darkening
+  const edgeGrad = c.createRadialGradient(cx, cy, sphereR * 0.70, cx, cy, sphereR);
+  edgeGrad.addColorStop(0, 'rgba(0,0,0,0)');
+  edgeGrad.addColorStop(1, 'rgba(60, 0, 35, 0.38)');
+  c.fillStyle = edgeGrad;
+  c.beginPath();
+  c.arc(cx, cy, sphereR, 0, Math.PI * 2);
+  c.fill();
+
+  // ── PRIMARY SPECULAR HIGHLIGHT (fixed upper-left, like reference image) ──
+  const hlCX = cx - sphereR * 0.22;
+  const hlCY = cy - sphereR * 0.29;
+  const hlGrad = c.createRadialGradient(hlCX, hlCY, 0, hlCX, hlCY, sphereR * 0.40);
+  hlGrad.addColorStop(0.00, 'rgba(255,255,255,0.92)');
+  hlGrad.addColorStop(0.28, 'rgba(255,255,255,0.52)');
+  hlGrad.addColorStop(0.65, 'rgba(255,255,255,0.09)');
+  hlGrad.addColorStop(1.00, 'rgba(255,255,255,0)');
+  c.fillStyle = hlGrad;
+  c.beginPath();
+  c.arc(cx, cy, sphereR, 0, Math.PI * 2);
+  c.fill();
+
+  // Secondary subtle highlight (lower right, simulates ambient bounce)
+  const hl2Grad = c.createRadialGradient(cx + sphereR * 0.32, cy + sphereR * 0.28, 0,
+                                          cx + sphereR * 0.32, cy + sphereR * 0.28, sphereR * 0.18);
+  hl2Grad.addColorStop(0, 'rgba(255,200,230,0.18)');
+  hl2Grad.addColorStop(1, 'rgba(255,200,230,0)');
+  c.fillStyle = hl2Grad;
+  c.beginPath();
+  c.arc(cx, cy, sphereR, 0, Math.PI * 2);
+  c.fill();
+
+  // ── MOVING CURSOR HIGHLIGHT (represents morph X/Y position) ──
+  // Project morphX/Y → point on sphere surface
+  const projX = cx + (morphX - 0.5) * sphereR * 1.58;
+  const projY = cy + (morphY - 0.5) * sphereR * 1.58;
+  const projDist = Math.hypot(projX - cx, projY - cy);
+  const clampR   = sphereR * 0.87;
+  const cursorX  = projDist > clampR ? cx + (projX - cx) * clampR / projDist : projX;
+  const cursorY  = projDist > clampR ? cy + (projY - cy) * clampR / projDist : projY;
+
+  // Cursor glow halo
+  const cursorHalo = c.createRadialGradient(cursorX, cursorY, 0, cursorX, cursorY, sphereR * 0.24);
+  cursorHalo.addColorStop(0, 'rgba(255,255,255,0.28)');
+  cursorHalo.addColorStop(1, 'rgba(255,255,255,0)');
+  c.fillStyle = cursorHalo;
+  c.beginPath();
+  c.arc(cx, cy, sphereR, 0, Math.PI * 2);
+  c.fill();
+
+  // Cursor core — bright white dot (moving "highlight" on sphere surface)
+  const coreR = sphereR * 0.068;
+  const coreGrad = c.createRadialGradient(cursorX - coreR * 0.3, cursorY - coreR * 0.3, 0,
+                                           cursorX, cursorY, coreR * 1.4);
+  coreGrad.addColorStop(0, 'rgba(255,255,255,1.0)');
+  coreGrad.addColorStop(0.45, 'rgba(255,255,255,0.85)');
+  coreGrad.addColorStop(1, 'rgba(255,255,255,0)');
+  c.fillStyle = coreGrad;
+  c.beginPath();
+  c.arc(cursorX, cursorY, coreR * 1.8, 0, Math.PI * 2);
+  c.fill();
+
+  // Animated pulse rings around cursor
+  for (let r = 0; r < 3; r++) {
+    const anim = (Math.sin(morphPhase + r * 1.1) * 0.5 + 0.5);
+    const ringR = coreR * (1.6 + r * 0.9 + anim * 0.4);
     c.beginPath();
-    c.arc(px, py, radius, 0, Math.PI * 2);
-    c.strokeStyle = `rgba(196,135,74,${0.04 + anim * 0.04})`;
+    c.arc(cursorX, cursorY, ringR, 0, Math.PI * 2);
+    c.strokeStyle = `rgba(255,255,255,${0.07 + anim * 0.10})`;
     c.lineWidth = 0.8;
     c.stroke();
   }
@@ -1965,30 +1936,30 @@ function drawKeyboard(pressedNote = null) {
 
     const grad = c.createLinearGradient(x, 0, x, H);
     if (isActive) {
-      grad.addColorStop(0, '#d4a86a');
-      grad.addColorStop(1, '#a07040');
+      grad.addColorStop(0, '#FF82C8');
+      grad.addColorStop(1, '#FF3DA6');
     } else {
-      grad.addColorStop(0, '#e8e0d4');
-      grad.addColorStop(0.7, '#d0c8bc');
-      grad.addColorStop(1, '#b8b0a4');
+      grad.addColorStop(0, '#FFFFFF');
+      grad.addColorStop(0.7, '#FBF4F9');
+      grad.addColorStop(1, '#F0DCEB');
     }
     c.fillStyle = grad;
     c.beginPath();
     c.roundRect(x + 1, 0, wkW - 2, H - 1, [0, 0, radius, radius]);
     c.fill();
-    c.strokeStyle = '#2c2926';
+    c.strokeStyle = 'rgba(255,61,166,0.10)';
     c.lineWidth = 0.5;
     c.stroke();
 
     // Highlight
     if (!isActive) {
-      c.fillStyle = 'rgba(255,250,245,0.4)';
-      c.fillRect(x + 2, 1, wkW * 0.3, H * 0.15);
+      c.fillStyle = 'rgba(255,255,255,0.65)';
+      c.fillRect(x + 2, 1, wkW * 0.3, H * 0.18);
     }
 
     // Note label (C only)
     if (pos === 0) {
-      c.fillStyle = isActive ? '#2c1a08' : '#7a7168';
+      c.fillStyle = isActive ? '#FFFFFF' : 'rgba(192,80,140,0.55)';
       c.font = `${Math.max(7, wkW * 0.3)}px DM Mono`;
       c.textAlign = 'center';
       c.fillText('C' + (BASE_OCTAVE + oct), x + wkW / 2, H - 5);
@@ -2006,11 +1977,11 @@ function drawKeyboard(pressedNote = null) {
 
       const grad = c.createLinearGradient(bx, 0, bx, bkH);
       if (isActive) {
-        grad.addColorStop(0, '#c4874a');
-        grad.addColorStop(1, '#7a5228');
+        grad.addColorStop(0, '#FF3DA6');
+        grad.addColorStop(1, '#8A0048');
       } else {
-        grad.addColorStop(0, '#2c2420');
-        grad.addColorStop(1, '#181412');
+        grad.addColorStop(0, '#2A0018');
+        grad.addColorStop(1, '#140008');
       }
       c.fillStyle = grad;
       c.beginPath();
@@ -2018,7 +1989,7 @@ function drawKeyboard(pressedNote = null) {
       c.fill();
 
       if (!isActive) {
-        c.fillStyle = 'rgba(255,240,220,0.06)';
+        c.fillStyle = 'rgba(255,150,210,0.10)';
         c.fillRect(bx + 2, 1, bkW * 0.35, bkH * 0.55);
       }
     }
