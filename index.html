@@ -835,6 +835,7 @@ function initAudio() {
   compressor.connect(analyserL);
   compressor.connect(analyserR);
   analyserL.connect(ctx.destination);
+  analyserR.connect(ctx.destination);
 
   masterGain.connect(reverbGain);
   reverbGain.connect(reverbNode);
@@ -1316,7 +1317,7 @@ function drawEnvCanvas() {
 
   // Phase labels
   ctx2.fillStyle = 'rgba(255,61,166,0.25)';
-  ctx2.font = '8px DM Mono';
+  ctx2.font = "8px 'Space Mono', monospace";
   ['A', 'D', 'S', 'R'].forEach((l, i) => {
     const tx = [toX(t0 + (t1-t0)*0.5), toX(t1+(t2-t1)*0.5), toX(t2+(t3-t2)*0.5), toX(t3+(t4-t3)*0.5)][i];
     ctx2.fillText(l, tx - 3, h - 2);
@@ -1467,7 +1468,8 @@ function drawSpectral() {
     canvas.height = H * window.devicePixelRatio;
   }
   const c = canvas.getContext('2d');
-  c.scale(window.devicePixelRatio / (canvas.width / W), window.devicePixelRatio / (canvas.height / H));
+  const dpr = window.devicePixelRatio;
+  c.setTransform(dpr, 0, 0, dpr, 0, 0);
   const w = W, h = H;
 
   c.clearRect(0, 0, w, h);
@@ -1516,7 +1518,7 @@ function drawSpectral() {
     c.beginPath();
     c.moveTo(0, h);
     sorted.forEach(n => {
-      c.lineTo(n.x * w, (1 - (1 - n.y)) * h);
+      c.lineTo(n.x * w, n.y * h);
     });
     c.lineTo(w, h);
     c.strokeStyle = 'rgba(255,61,166,0.18)';
@@ -1908,7 +1910,11 @@ function drawKeyboard(pressedNote = null) {
     const oct = Math.floor(i / 7);
     const pos = i % 7;
     const semi = BASE_OCTAVE * 12 + oct * 12 + WHITE_NOTES[pos];
-    const isActive = [...activeKeyboardNotes].some(k => parseInt(k.split('_')[1]) === semi) || semi === pressedNote;
+    const isActive = [...activeKeyboardNotes].some(k => {
+      if (k.startsWith('mouse_')) return parseInt(k.split('_')[1]) === semi;
+      if (k.startsWith('kb_')) return (KEY_MAP[k.slice(3)] ?? -999) + BASE_OCTAVE * 12 === semi;
+      return false;
+    }) || semi === pressedNote;
     const x = i * wkW;
 
     const grad = c.createLinearGradient(x, 0, x, H);
@@ -1937,7 +1943,7 @@ function drawKeyboard(pressedNote = null) {
     // Note label (C only)
     if (pos === 0) {
       c.fillStyle = isActive ? '#FFFFFF' : 'rgba(192,80,140,0.55)';
-      c.font = `${Math.max(7, wkW * 0.3)}px DM Mono`;
+      c.font = `${Math.max(7, wkW * 0.3)}px 'Space Mono', monospace`;
       c.textAlign = 'center';
       c.fillText('C' + (BASE_OCTAVE + oct), x + wkW / 2, H - 5);
     }
@@ -1949,7 +1955,11 @@ function drawKeyboard(pressedNote = null) {
       const bo = BLACK_OFFSETS[wi];
       if (bo === null) continue;
       const semi = BASE_OCTAVE * 12 + oct * 12 + bo;
-      const isActive = [...activeKeyboardNotes].some(k => parseInt(k.split('_')[1]) === semi) || semi === pressedNote;
+      const isActive = [...activeKeyboardNotes].some(k => {
+        if (k.startsWith('mouse_')) return parseInt(k.split('_')[1]) === semi;
+        if (k.startsWith('kb_')) return (KEY_MAP[k.slice(3)] ?? -999) + BASE_OCTAVE * 12 === semi;
+        return false;
+      }) || semi === pressedNote;
       const bx = (oct * 7 + wi + 0.65) * wkW - bkW / 2;
 
       const grad = c.createLinearGradient(bx, 0, bx, bkH);
@@ -2092,7 +2102,7 @@ window.addEventListener('DOMContentLoaded', () => {
   buildVoiceDots();
 
   // Click anywhere to init audio context (browser policy)
-  document.addEventListener('click', initAudio, { once: false });
+  document.addEventListener('click', initAudio, { once: true });
 
   // Keyboard shortcut hints
   console.log('FORMA — Keyboard shortcuts: Z-M (lower oct), A-L (upper oct), Q-U (top oct)');
